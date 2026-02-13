@@ -1,3 +1,4 @@
+import WelcomeToast from "@/components/WelcomeToast";
 import { createClerkSupabaseClient } from "@/lib/supabase";
 import { currentUser } from "@clerk/nextjs/server";
 
@@ -17,6 +18,7 @@ export default async function HomePage() {
 
     return (
         <div>
+            <WelcomeToast />
             <h1 className="text-2xl font-bold mb-4">Welcome, {user?.firstName || "User"}!</h1>
             <div className="bg-white p-6 rounded-lg shadow space-y-2 border">
                 <p className="text-gray-600">
