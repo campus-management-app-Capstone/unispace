@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import Navbar from "@/components/navbar";
+import AdminNavbar from "@/components/AdminNavbar";
 import WelcomeToast from "@/components/WelcomeToast";
 
 export default async function ProtectedLayout({
@@ -17,7 +18,7 @@ export default async function ProtectedLayout({
 
     return (
         <div className="min-h-screen flex flex-col bg-gray-50">
-            <Navbar />
+            <AdminNavbar />
             <WelcomeToast />
             <main className="flex-1 container mx-auto p-6">
                 {children}

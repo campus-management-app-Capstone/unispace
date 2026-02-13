@@ -1,13 +1,17 @@
 import { SignIn } from '@clerk/nextjs'
-import { auth } from "@clerk/nextjs/server";
+import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import Image from "next/image";
 
 export default async function Page() {
-    const { userId } = await auth();
+    const user = await currentUser();
 
-    //already logged in, skip the landing page
-    if (userId) {
+    // Already logged in: route by role (admin → AdminPanel, others → home)
+    if (user) {
+        const role = (user.publicMetadata?.role as string) ?? undefined;
+        if (role === "admin") {
+            redirect("/AdminPanel");
+        }
         redirect("/home");
     }
 
