@@ -58,11 +58,15 @@ const page = () => {
   const floorLabels = ["B1", "G", "L1", "L2", "L3", "L4", "L5"];
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center ">
+
+      {/* small background design */}
+      <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] rounded-full bg-blue-400/30 blur-[80px] mix-blend-multiply animate-pulse"></div>
+      <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] rounded-full bg-purple-400/30 blur-[100px] mix-blend-multiply"></div>
+      <div className="absolute bottom-1 right-0 w-[400px] h-[400px] rounded-full bg-pink-300/30 blur-[80px] mix-blend-multiply opacity-70"></div>
 
       {/* search bar */}
       <div className="flex flex-col gap-3 w-[90%] mb-6">
-
         {/* 1. Start Point Input */}
         <div className="relative group">
           {/* Icon: Hollow Blue Circle */}
@@ -197,7 +201,7 @@ const page = () => {
                           {/* render name */}
                           {
                             !cell.startsWith("E") && !notRender.includes(cell) ? (
-                              <span className={`text-[15px] font-bold text-gray-900 z-10 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2`}>
+                              <span className={`text-[20px] font-bold text-gray-900 z-10 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2`}>
                                 {cell}
                               </span>
                             ) : null
