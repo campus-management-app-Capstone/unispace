@@ -2,8 +2,8 @@ import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
 /**
- * Admin panel page. use currentUser() get user role
- * Navbar is rendered once by (protected)/layout.tsx.
+ * Admin panel page = restricted to admin role.
+ * Navbar is fiter by (protected)/layout.tsx from user role (AdminNavbar for admin).
  */
 export default async function AdminPanel() {
     const user = await currentUser();
