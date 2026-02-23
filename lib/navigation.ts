@@ -1,5 +1,7 @@
 import { rawMap, x, p, sp, e, pa, pb, pc, pd, f, c, o } from "@/data/map";
 
+// 加interactive 给按那个图片可以直接输入进去那个To where
+
 // store:
 // start
 // end
