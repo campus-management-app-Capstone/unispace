@@ -47,27 +47,27 @@ import { cn } from "@/lib/utils";
 const courseSubItems = [
   {
     label: "Course List",
-    href: "/course/courselist",
+    href: "/admin/course/courselist",
     icon: List,
   },
   { 
     label: "Department", 
-    href: "/course/department", 
+    href: "/admin/course/department", 
     icon: Building,  
   },
   { 
     label: "Subject", 
-    href: "/course/subject", 
+    href: "/admin/course/subject", 
     icon: BookText, 
   },
   { 
     label: "Syllabus", 
-    href: "/course/syllabus", 
+    href: "/admin/course/syllabus", 
     icon: FileText, 
   },
   { 
     label: "Class", 
-    href: "/course/class", 
+    href: "/admin/course/class", 
     icon: School, 
   },
 ] as const;
