@@ -31,8 +31,8 @@ export const createClerkSupabaseClient = async () => {
 };
 
 /**
- * Server-side Supabase client using the anon key only (no Clerk token).
- * Use for reading public / non-RLS-protected tables (e.g. Department, Course).
+ * Server-side Supabase client using the anon key
+ * Use for reading public / non-RLS-protected tables
  */
 export const createServerSupabaseClient = () =>
     createClient<Database>(
