@@ -10,7 +10,7 @@ export default async function Page() {
     if (user) {
         const role = (user.publicMetadata?.role as string) ?? undefined;
         if (role === "admin") {
-            redirect("/AdminPanel");
+            redirect("/admin");
         }
         redirect("/home");
     }
