@@ -201,7 +201,7 @@ const page = () => {
                           {/* render name */}
                           {
                             !cell.startsWith("E") && !notRender.includes(cell) ? (
-                              <span className={`text-[20px] font-bold text-gray-900 z-10 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2`}>
+                              <span className={`text-[20px] font-bold text-gray-900 z-10 absolute top-1/2 left-7/10 transform -translate-x-1/2 -translate-y-1/2`}>
                                 {cell}
                               </span>
                             ) : null
