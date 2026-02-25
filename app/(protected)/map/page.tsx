@@ -58,48 +58,50 @@ const page = () => {
 
   // navigation
   const handleNavigate = () => {
-    // fromTarget , toTarget , fromCoord , toCoord
-    setToTarget(toTarget.trim().toLowerCase());
-    setFromTarget(fromTarget.trim().toLowerCase());
+    // Trim and lowercase inputs
+    const trimmedFrom = fromTarget.trim().toLowerCase();
+    const trimmedTo = toTarget.trim().toLowerCase();
 
     // check input not empty
-    if (!fromTarget || !toTarget) {
+    if (!trimmedFrom || !trimmedTo) {
       toast.error("Please enter both start and end points.");
       return;
     }
 
     // check start is not toilet, lift or stair
     const invalidStart = ["toilet", "lift", "stair"];
-    if (invalidStart.includes(fromTarget)) {
+    if (invalidStart.includes(trimmedFrom)) {
       toast.error("Toilet, Lift, or Stair cannot be a starting point. There are too much!");
       return;
     }
 
     // find entry points for start
-    setFromCoord(findEntry(fromTarget));
-    if (!fromCoord) {
+    const foundFromCoord = findEntry(trimmedFrom);
+    if (!foundFromCoord) {
       toast.error(`Starting point "${fromTarget}" not found. Please check your input.`);
       return;
     }
 
     // find entry points for toilet, lift or stair, find nearest
-    if (invalidStart.includes(toTarget)) {
-      setToCoord(findNearest(fromCoord, toTarget));
+    let foundToCoord;
+    if (invalidStart.includes(trimmedTo)) {
+      foundToCoord = findNearest(foundFromCoord, trimmedTo);
     } else {
       // find entry points for end
-      setToCoord(findEntry(toTarget));
+      foundToCoord = findEntry(trimmedTo);
     }
 
     // check toCoord exist
-    if (!toCoord) {
+    if (!foundToCoord) {
       toast.error(`End point "${toTarget}" not found. Please check your input.`);
       return;
     }
 
-
-    // find path
-    console.log("Navigating from", fromTarget, "(", fromCoord, ") to", toTarget, "(", toCoord, ")");
-    const path = navigate(fromCoord, toCoord); // use entry points
+    // Update state and find path
+    setFromCoord(foundFromCoord);
+    setToCoord(foundToCoord);
+    console.log("Navigating from", trimmedFrom, "(", foundFromCoord, ") to", trimmedTo, "(", foundToCoord, ")");
+    const path = navigate(foundFromCoord, foundToCoord); // use entry points
     setPath(path);
   }
 
@@ -234,7 +236,7 @@ const page = () => {
                           {
                             !cell.startsWith("E") && !notRender.includes(cell) ? (
                               <span
-                                className={`text-[20px] font-bold text-gray-900 z-10 absolute top-1/2 left-7/10 transform -translate-x-1/2 -translate-y-1/2 cursor-pointer`}
+                                className={`text-[20px] font-bold text-gray-900 z-10 absolute top-1/2 left-7/10 transform -translate-x-1/2 -translate-y-1/2`}
                               >
                                 {cell}
                               </span>
@@ -244,7 +246,7 @@ const page = () => {
                           {/* render image */}
                           {
                             cell === "Lift" || cell === "Stair" || cell === "Toilet" || cell === "ATM" || cell == "Exit" || cell === "Main Entrance" ? (
-                              <div className="relative w-full h-full p-1 cursor-pointer">
+                              <div className="relative w-full h-full p-1">
                                 <Image
                                   src={`/icons/${cell}.svg`}  // Path starts from 'public' folder
                                   alt={cell}
