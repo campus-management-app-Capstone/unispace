@@ -19,6 +19,7 @@ import {
   School,
   Menu,
   ChevronDown,
+  UsersRound 
 } from "lucide-react";
 import {
   NavigationMenu,
@@ -98,6 +99,11 @@ const adminNavItems = [
     label: "Announcement", 
     href: "/admin/announcement", 
     icon: Megaphone, 
+  },
+  { 
+    label: "Admin", 
+    href: "/admin/adminmanagement", 
+    icon: UsersRound, 
   },
 ] as const;
 
