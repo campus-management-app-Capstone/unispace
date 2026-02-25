@@ -3,11 +3,11 @@
 import React, { useEffect } from 'react'
 import { useState } from "react";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
-import { rawMap, x, p, sp, e, pa, pb, pc, pd, f, c, o } from "@/data/map";
+import { rawMap, x, p, sp, e, pa, pb, pc, pd, f, c, o, searchList } from "@/data/map";
 import Image from "next/image";
 import { navigate, findEntry, findNearest, Coordinate } from "@/lib/navigation";
 import { toast } from 'react-toastify';
-import { set } from 'date-fns';
+import { AutocompleteInput } from '@/components/AutocompleteInput';
 
 // Color
 const getCellColor = (cell, above, below, left, right) => {
@@ -110,49 +110,40 @@ const page = () => {
 
       {/* small background design */}
       <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] rounded-full bg-blue-400/30 blur-[80px] mix-blend-multiply animate-pulse"></div>
-      <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] rounded-full bg-purple-400/30 blur-[100px] mix-blend-multiply"></div>
+      <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] rounded-full bg-purple-400/30 blur-[100px] mix-blend-multiply z-[-10]"></div>
       <div className="absolute bottom-1 right-0 w-[400px] h-[400px] rounded-full bg-pink-300/30 blur-[80px] mix-blend-multiply opacity-70"></div>
 
       {/* search bar */}
       <div className="flex flex-col gap-3 w-[90%] mb-6">
         {/* 1. Start Point Input */}
-        <div className="relative group">
-          {/* Icon: Hollow Blue Circle */}
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-[3px] border-blue-500 bg-transparent z-10"></div>
-
-          {/* Connecting Line (Dotted) */}
-          <div className="absolute left-[1.1rem] top-8 h-6 border-l-2 border-dotted border-gray-300"></div>
-
-          <input
-            type="text"
-            placeholder="Starting Point (e.g. Lobby)"
-            className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
-            value={fromTarget}
-            onChange={(e) => setFromTarget(e.target.value)}
-          />
-        </div>
+        <AutocompleteInput
+          value={fromTarget}
+          onChange={setFromTarget} // Magic: React passes the value directly into your state setter!
+          placeholder="Starting Point (e.g. Lobby)"
+          searchList={searchList}
+          hasConnector={true}
+          icon={<div className="w-3 h-3 rounded-full border-[3px] border-blue-500 bg-transparent"></div>}
+        />
 
         {/* 2. Destination Input */}
-        <div className="relative group">
-          {/* Icon: Red Location Pin */}
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-red-500">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-              <path fillRule="evenodd" d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 001.144-.742 19.58 19.58 0 002.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 00-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 002.682 2.282 16.975 16.975 0 001.145.742zM12 13.5a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
-            </svg>
-          </div>
+        <AutocompleteInput
+          value={toTarget}
+          onChange={setToTarget}
+          placeholder="Where to? (e.g. Library)"
+          searchList={searchList}
+          icon={
+            <div className="text-red-500">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+                <path fillRule="evenodd" d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 001.144-.742 19.58 19.58 0 002.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 00-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 002.682 2.282 16.975 16.975 0 001.145.742zM12 13.5a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+              </svg>
+            </div>
+          }
+        />
 
-          <input
-            type="text"
-            placeholder="Where to? (e.g. Library)"
-            className="w-full pl-9 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
-            value={toTarget}
-            onChange={(e) => setToTarget(e.target.value)}
-          />
-        </div>
 
         {/* 3. Search button */}
         <button
-          className="cursor-pointer mt-1 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg shadow-md transition-all active:scale-95 flex items-center justify-center gap-2"
+          className="cursor-pointer mt-1 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 z-10"
           onClick={() => handleNavigate()}
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 cursor-pointer">
