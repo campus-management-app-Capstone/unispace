@@ -261,7 +261,7 @@ const page = () => {
                           {
                             // check if the cell matches one of the path xyz
                             path.some(coord => coord.x === colIndex && coord.y === rowIndex && coord.z === currentFloor) ? (
-                              <div className="absolute inset-0 bg-blue-500 opacity-30 z-10"></div>
+                              <div className="absolute inset-0 bg-yellow-500 opacity-30 z-10"></div>
                             ) : null
                           }
                         </div>
