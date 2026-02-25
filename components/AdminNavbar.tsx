@@ -99,6 +99,11 @@ const adminNavItems = [
     href: "/admin/announcement", 
     icon: Megaphone, 
   },
+  { 
+    label: "Announcement", 
+    href: "/admin/announcement", 
+    icon: Megaphone, 
+  },
 ] as const;
 
 /**
