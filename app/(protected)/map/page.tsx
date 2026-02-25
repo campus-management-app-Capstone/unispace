@@ -1,12 +1,13 @@
 "use client";
 
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useState } from "react";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { rawMap, x, p, sp, e, pa, pb, pc, pd, f, c, o } from "@/data/map";
 import Image from "next/image";
-import { navigationLogic } from "@/lib/navigation";
-
+import { navigate, findEntry, findNearest, Coordinate } from "@/lib/navigation";
+import { toast } from 'react-toastify';
+import { set } from 'date-fns';
 
 // Color
 const getCellColor = (cell, above, below, left, right) => {
@@ -18,10 +19,13 @@ const getCellColor = (cell, above, below, left, right) => {
   if (cell === p || cell === sp || cell.startsWith("E")) {
     return "bg-gray-200";
   }
+  // if(cell === p){
+  //   return "bg-blue"
+  // }
 
   // parking
   const parkingCells = [pa, pb, pc, pd];
-  if (parkingCells.includes(cell) || parkingCells.includes(above) || parkingCells.includes(below) || parkingCells.includes(left) || parkingCells.includes(right)) return "bg-gray-400";
+  if (parkingCells.includes(cell) || parkingCells.includes(above) || parkingCells.includes(below) || parkingCells.includes(left) || parkingCells.includes(right)) return "bg-gray-200";
 
   // building
   if (cell === f || above === f || below === f || left === f || right === f) return "bg-blue-200"; // Facility
@@ -32,22 +36,6 @@ const getCellColor = (cell, above, below, left, right) => {
   return "bg-green-200 text-xs font-bold text-center flex items-center justify-center border border-green-300";
 };
 
-// navigation
-// const [path, setPath] = useState([]);
-
-// const navigate = () => {
-
-//   const startNode = { x: 1, y: 1, z: 1 };
-//   const endNode = { x: 20, y: 15, z: 1 };
-
-
-//   const result = navigationLogic(startNode, endNode);
-
-
-//   // if (result) setPath(result);
-// };
-
-
 // Main
 const page = () => {
   const [currentFloor, setCurrentFloor] = useState(1); // Default G
@@ -56,6 +44,64 @@ const page = () => {
 
   // Map Array Index to Floor Name
   const floorLabels = ["B1", "G", "L1", "L2", "L3", "L4", "L5"];
+
+  // x = colIndex, y = rowIndex, z = currentFloor
+  const [fromTarget, setFromTarget] = useState<string>("");
+  const [toTarget, setToTarget] = useState<string>("");
+  const [fromCoord, setFromCoord] = useState<Coordinate | null>(null);
+  const [toCoord, setToCoord] = useState<Coordinate | null>(null);
+  const [path, setPath] = useState<Coordinate[]>([]);
+
+  // useEffect(()=>{
+  //     console.log(`From: ${fromTarget} To: ${toTarget}`);
+  //   }, [fromTarget, toTarget])
+
+  // navigation
+  const handleNavigate = () => {
+    // fromTarget , toTarget , fromCoord , toCoord
+    setToTarget(toTarget.trim().toLowerCase());
+    setFromTarget(fromTarget.trim().toLowerCase());
+
+    // check input not empty
+    if (!fromTarget || !toTarget) {
+      toast.error("Please enter both start and end points.");
+      return;
+    }
+
+    // check start is not toilet, lift or stair
+    const invalidStart = ["toilet", "lift", "stair"];
+    if (invalidStart.includes(fromTarget)) {
+      toast.error("Toilet, Lift, or Stair cannot be a starting point. There are too much!");
+      return;
+    }
+
+    // find entry points for start
+    setFromCoord(findEntry(fromTarget));
+    if (!fromCoord) {
+      toast.error(`Starting point "${fromTarget}" not found. Please check your input.`);
+      return;
+    }
+
+    // find entry points for toilet, lift or stair, find nearest
+    if (invalidStart.includes(toTarget)) {
+      setToCoord(findNearest(fromCoord, toTarget));
+    } else {
+      // find entry points for end
+      setToCoord(findEntry(toTarget));
+    }
+
+    // check toCoord exist
+    if (!toCoord) {
+      toast.error(`End point "${toTarget}" not found. Please check your input.`);
+      return;
+    }
+
+
+    // find path
+    console.log("Navigating from", fromTarget, "(", fromCoord, ") to", toTarget, "(", toCoord, ")");
+    const path = navigate(fromCoord, toCoord); // use entry points
+    setPath(path);
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center ">
@@ -79,7 +125,8 @@ const page = () => {
             type="text"
             placeholder="Starting Point (e.g. Lobby)"
             className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
-          // onChange={(e) => setStart(e.target.value)} 
+            value={fromTarget}
+            onChange={(e) => setFromTarget(e.target.value)}
           />
         </div>
 
@@ -96,16 +143,17 @@ const page = () => {
             type="text"
             placeholder="Where to? (e.g. Library)"
             className="w-full pl-9 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
-          // onChange={(e) => setEnd(e.target.value)}
+            value={toTarget}
+            onChange={(e) => setToTarget(e.target.value)}
           />
         </div>
 
-        {/* 3. Search */}
+        {/* 3. Search button */}
         <button
-          className="mt-1 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg shadow-md transition-all active:scale-95 flex items-center justify-center gap-2"
-        // onClick={handleSearch}
+          className="cursor-pointer mt-1 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg shadow-md transition-all active:scale-95 flex items-center justify-center gap-2"
+          onClick={() => handleNavigate()}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 cursor-pointer">
             <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clipRule="evenodd" />
           </svg>
           Find Path
@@ -123,22 +171,6 @@ const page = () => {
             className="object-contain " // Keeps aspect ratio perfect
           />
         </div>
-
-        {/* Floor Select */}
-        {/* <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 flex gap-2 bg-white p-2 rounded-lg shadow">
-          {rawMap.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentFloor(index)}
-              className={`px-4 py-2 rounded-md font-medium transition-colors ${currentFloor === index
-                ? "bg-blue-600 text-white shadow-md"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
-            >
-              {floorLabels[index] || `Floor ${index}`}
-            </button>
-          ))}
-        </div> */}
 
         <div className="absolute top-1/5 left-4 z-10 flex flex-col items-center gap-2 bg-white p-2 rounded-lg shadow-md border border-gray-200 w-16">
 
@@ -201,22 +233,33 @@ const page = () => {
                           {/* render name */}
                           {
                             !cell.startsWith("E") && !notRender.includes(cell) ? (
-                              <span className={`text-[20px] font-bold text-gray-900 z-10 absolute top-1/2 left-7/10 transform -translate-x-1/2 -translate-y-1/2`}>
+                              <span
+                                className={`text-[20px] font-bold text-gray-900 z-10 absolute top-1/2 left-7/10 transform -translate-x-1/2 -translate-y-1/2 cursor-pointer`}
+                              >
                                 {cell}
                               </span>
                             ) : null
                           }
 
+                          {/* render image */}
                           {
-                            cell === "Lift" || cell === "Stair" || cell === "Toilet" || cell === "ATM" || cell === "Main Entrance" ? (
-                              <div className="relative w-full h-full p-1">
+                            cell === "Lift" || cell === "Stair" || cell === "Toilet" || cell === "ATM" || cell == "Exit" || cell === "Main Entrance" ? (
+                              <div className="relative w-full h-full p-1 cursor-pointer">
                                 <Image
                                   src={`/icons/${cell}.svg`}  // Path starts from 'public' folder
                                   alt={cell}
                                   fill                   // This makes it fill the parent container (24px)
                                   className="object-contain" // Keeps aspect ratio perfect
+                                  onClick={() => { }}
                                 />
                               </div>
+                            ) : null
+                          }
+                          {/* render path */}
+                          {
+                            // check if the cell matches one of the path xyz
+                            path.some(coord => coord.x === colIndex && coord.y === rowIndex && coord.z === currentFloor) ? (
+                              <div className="absolute inset-0 bg-blue-500 opacity-30 z-10"></div>
                             ) : null
                           }
                         </div>
