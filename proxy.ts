@@ -1,6 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from 'next/server';
-import { auth } from "@clerk/nextjs/server";
 
 // check admin route
 const isAdminRoute = createRouteMatcher(['/admin(.*)']);
@@ -16,18 +15,24 @@ export default clerkMiddleware(async (auth, req) => {
     await auth.protect();
   }
 
-  // Check if the user is trying to access the admin panel
-  if (isAdminRoute(req)) {
+  // already login
+  // get role
+  const { sessionClaims } = await auth();
+  const userRole = sessionClaims?.metadata?.role;
 
-    // get role
-    const { sessionClaims } = await auth();
-    const userRole = sessionClaims?.metadata?.role;
+  // check student and lecturer only, not admin
+  if (!isAdminRoute(req) && userRole === 'admin' && !isPublicRoute(req)) {
+    // is a admin, not allow to access other than admin page
+    const redirectUrl = new URL('/admin', req.url); // redirect to admin page
+    return NextResponse.redirect(redirectUrl);
+  }
 
+  // check admin only for admin route
+  if (isAdminRoute(req) && userRole !== 'admin' && !isPublicRoute(req)) {
     //not admin
-    if (userRole !== 'admin') {
-      const redirectUrl = new URL('/home', req.url); // redirect to home page
-      return NextResponse.redirect(redirectUrl);
-    }
+    const redirectUrl = new URL('/home', req.url); // redirect to home page
+    return NextResponse.redirect(redirectUrl);
+
   }
 });
 
