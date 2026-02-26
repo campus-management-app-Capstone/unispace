@@ -1,40 +1,262 @@
-import React from 'react'
-import { Plus, Search, SlidersHorizontal, ChevronLeft, ChevronRight } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+"use client";
+
+import { useEffect, useState, useMemo, useCallback } from "react";
+import { createBrowserSupabaseClient } from "@/lib/supabase-browser";
+import { toast } from "sonner";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select'
+  Search,
+  Plus,
+  ChevronLeft,
+  ChevronRight,
+  SlidersHorizontal,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import CreateNewSubjectForm, {
+  type subjectFormValues,
+} from "@/components/CreateNewSubjectForm";
 
-const SubjectPage = () => {
+/** Shape of a subject row joined with its course name */
+interface SubjectWithCourse {
+  SubjectID: string;
+  Name: string;
+  CourseID: string;
+  CourseName: string;
+  Duration: number;
+  Semester: number;
+}
 
-  
+interface Course {
+  CourseID: string;
+  Name: string;
+}
+
+const ITEMS_PER_PAGE = 5;
+
+/**
+ * SubjectPage — client-side subject repository
+ * Fetches subjects + courses from Supabase and provides
+ * search, code filter, course filter, and pagination.
+ */
+export default function SubjectPage() {
+  const [subjects, setSubjects] = useState<SubjectWithCourse[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [codeFilter, setCodeFilter] = useState("");
+  const [selectedCourse, setSelectedCourse] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  /** Reusable fetch — pulls subjects + courses from Supabase */
+  const fetchData = useCallback(async () => {
+    setIsLoading(true);
+    const supabase = createBrowserSupabaseClient();
+
+    const [subjectRes, courseRes] = await Promise.all([
+      supabase
+        .from("Subject")
+        .select("SubjectID, Name, CourseID, Duration, Semester")
+        .order("SubjectID"),
+      supabase
+        .from("Course")
+        .select("CourseID, Name")
+        .order("Name"),
+    ]);
+
+    const courseMap = new Map<string, string>();
+    (courseRes.data ?? []).forEach((c) => courseMap.set(c.CourseID, c.Name));
+
+    const merged: SubjectWithCourse[] = (subjectRes.data ?? []).map((s) => ({
+      ...s,
+      CourseName: courseMap.get(s.CourseID) ?? "Unassigned",
+    }));
+
+    setSubjects(merged);
+    setCourses(courseRes.data ?? []);
+    setIsLoading(false);
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  /** Apply search + filters */
+  const filteredSubjects = useMemo(() => {
+    const query = searchQuery.toLowerCase().trim();
+    const code = codeFilter.toLowerCase().trim();
+
+    return subjects.filter((s) => {
+      const matchesSearch =
+        !query ||
+        s.Name.toLowerCase().includes(query) ||
+        s.SubjectID.toLowerCase().includes(query);
+      const matchesCode =
+        !code || s.SubjectID.toLowerCase().includes(code);
+      const matchesCourse =
+        selectedCourse === "all" || s.CourseID === selectedCourse;
+      return matchesSearch && matchesCode && matchesCourse;
+    });
+  }, [subjects, searchQuery, codeFilter, selectedCourse]);
+
+  /** Pagination helpers */
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredSubjects.length / ITEMS_PER_PAGE)
+  );
+
+  const paginatedSubjects = useMemo(
+    () =>
+      filteredSubjects.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
+      ),
+    [filteredSubjects, currentPage]
+  );
+
+  /** Insert a new subject into Supabase, then refresh the list */
+  const handleCreateSubject = useCallback(
+    async (data: subjectFormValues) => {
+      setIsSubmitting(true);
+      try {
+        const supabase = createBrowserSupabaseClient();
+        const { error } = await supabase.from("Subject").insert({
+          SubjectID: data.SubjectID,
+          Name: data.Name,
+          CourseID: data.CourseID,
+          Duration: data.Duration,
+          Semester: data.Semester,
+        });
+
+        if (error) throw error;
+
+        toast.success("Subject created successfully.");
+        setIsDialogOpen(false);
+        await fetchData();
+      } catch (err: unknown) {
+        const message =
+          err instanceof Error ? err.message : "Failed to create subject.";
+        toast.error(message);
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [fetchData]
+  );
+
+  /** Clear all active filters */
+  const handleClearFilters = useCallback(() => {
+    setSearchQuery("");
+    setCodeFilter("");
+    setSelectedCourse("all");
+    setCurrentPage(1);
+  }, []);
+
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchQuery(value);
+    setCurrentPage(1);
+  }, []);
+
+  const handleCodeFilterChange = useCallback((value: string) => {
+    setCodeFilter(value);
+    setCurrentPage(1);
+  }, []);
+
+  const handleCourseChange = useCallback((value: string) => {
+    setSelectedCourse(value);
+    setCurrentPage(1);
+  }, []);
+
+  const hasActiveFilters =
+    searchQuery !== "" || codeFilter !== "" || selectedCourse !== "all";
+
+  /** Build visible page numbers with ellipsis */
+  const pageNumbers = useMemo(() => {
+    const pages: (number | "ellipsis")[] = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1, 2, 3);
+      if (currentPage > 4) pages.push("ellipsis");
+      const mid = Math.max(4, Math.min(currentPage, totalPages - 3));
+      if (mid > 3 && mid < totalPages - 2) pages.push(mid);
+      if (currentPage < totalPages - 3) pages.push("ellipsis");
+      pages.push(totalPages - 1, totalPages);
+    }
+    return [...new Set(pages)];
+  }, [totalPages, currentPage]);
+
+  /** Format duration as readable string */
+  function formatDuration(duration: number): string {
+    if (Number.isInteger(duration)) return `${duration} hr${duration > 1 ? "s" : ""}`;
+    return `${duration} hrs`;
+  }
 
   return (
     <div className="mx-auto w-full space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          Course Directory
-        </h1>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            Subject Repository
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Manage and view all academic subjects available in the curriculum.
+          </p>
+        </div>
         <Button className="gap-2" onClick={() => setIsDialogOpen(true)}>
           <Plus className="size-4" />
-          Add New Course
+          Create New Subject
         </Button>
       </div>
 
       {/* Search + Filters */}
       <div className="flex flex-wrap items-end gap-4">
-        {/* Search */}
+        {/* Search by name or keyword */}
         <div className="flex-1 min-w-[200px] space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">
-            Search
+          <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Search Subjects
           </label>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search by name or code..."
+              placeholder="Search by name or keyword..."
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
               className="pl-9"
@@ -42,43 +264,33 @@ const SubjectPage = () => {
           </div>
         </div>
 
-        {/* Department filter */}
+        {/* Code filter */}
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">
-            Department
+          <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Code
           </label>
-          <Select
-            value={selectedDepartment}
-            onValueChange={handleDepartmentChange}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="All Departments" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Departments</SelectItem>
-              {departments.map((d) => (
-                <SelectItem key={d.DepartmentID} value={d.DepartmentID}>
-                  {d.Name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Input
+            placeholder="e.g. CS101"
+            value={codeFilter}
+            onChange={(e) => handleCodeFilterChange(e.target.value)}
+            className="w-[160px]"
+          />
         </div>
 
-        {/* Level filter */}
+        {/* Course filter */}
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">
-            Level
+          <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Course
           </label>
-          <Select value={selectedLevel} onValueChange={handleLevelChange}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="All Levels" />
+          <Select value={selectedCourse} onValueChange={handleCourseChange}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="All Courses" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Levels</SelectItem>
-              {uniqueLevels.map((level) => (
-                <SelectItem key={level} value={level}>
-                  {level}
+              <SelectItem value="all">All Courses</SelectItem>
+              {courses.map((c) => (
+                <SelectItem key={c.CourseID} value={c.CourseID}>
+                  {c.Name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -94,32 +306,34 @@ const SubjectPage = () => {
             className="gap-2"
           >
             <SlidersHorizontal className="size-4" />
-            Clear
+            Clear Filters
           </Button>
         )}
       </div>
 
-      {/* Course table */}
+      {/* Subject table */}
       <div className="rounded-lg border bg-card">
         <Table className="table-fixed">
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead className="w-[30%] text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Course Name
-              </TableHead>
-              <TableHead className="w-[12%] text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <TableHead className="w-[14%] text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Code
               </TableHead>
-              <TableHead className="w-[14%] text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Level
+              <TableHead className="w-[26%] text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Subject Name
               </TableHead>
-              <TableHead className="w-[20%] text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Department
+              <TableHead className="w-[22%] text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Course Assigned
+              </TableHead>
+              <TableHead className="w-[14%] text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Duration
               </TableHead>
               <TableHead className="w-[12%] text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Semesters
+                Semester
               </TableHead>
-
+              <TableHead className="w-[12%] text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Actions
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -133,47 +347,64 @@ const SubjectPage = () => {
                   ))}
                 </TableRow>
               ))
-            ) : paginatedCourses.length === 0 ? (
+            ) : paginatedSubjects.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={6}
                   className="h-32 text-center text-muted-foreground"
                 >
-                  No courses found.
+                  No subjects found.
                 </TableCell>
               </TableRow>
             ) : (
-              paginatedCourses.map((course) => (
-                <TableRow key={course.CourseID}>
-                  <TableCell className="text-center">
-                    <div className="flex items-center justify-center gap-3">
-
-                      <span className="font-medium text-foreground">
-                        {course.Name}
-                      </span>
-                    </div>
+              paginatedSubjects.map((subject) => (
+                <TableRow key={subject.SubjectID}>
+                  <TableCell>
+                    <span className="font-medium text-primary">
+                      {subject.SubjectID}
+                    </span>
                   </TableCell>
-                  <TableCell className="text-center text-muted-foreground">
-                    {course.CourseID}
+                  <TableCell>
+                    <span className="font-medium text-foreground">
+                      {subject.Name}
+                    </span>
                   </TableCell>
-                  <TableCell className="text-center">
+                  <TableCell>
                     <Badge
                       variant="secondary"
-                      className={
-                        levelColorMap[course.Level] ??
-                        "bg-gray-100 text-gray-700 border-0"
-                      }
+                      className="bg-sky-100 text-sky-700 border-0"
                     >
-                      {course.Level}
+                      {subject.CourseName}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-center text-muted-foreground">
-                    {course.DepartmentName}
+                    {formatDuration(subject.Duration)}
                   </TableCell>
-                  <TableCell className="text-center text-muted-foreground">
-                    {course.TotalSemester}
+                  <TableCell className="text-center">
+                    <Badge variant="outline">
+                      Sem {subject.Semester}
+                    </Badge>
                   </TableCell>
-
+                  <TableCell className="text-center">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon-sm">
+                          <MoreHorizontal className="size-4" />
+                          <span className="sr-only">Actions</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem className="gap-2">
+                          <Pencil className="size-3.5" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="gap-2 text-destructive focus:text-destructive">
+                          <Trash2 className="size-3.5" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
               ))
             )}
@@ -181,7 +412,7 @@ const SubjectPage = () => {
         </Table>
 
         {/* Pagination footer */}
-        {!isLoading && filteredCourses.length > 0 && (
+        {!isLoading && filteredSubjects.length > 0 && (
           <div className="flex items-center justify-between border-t px-4 py-3">
             <p className="text-sm text-muted-foreground">
               Showing{" "}
@@ -190,11 +421,14 @@ const SubjectPage = () => {
               </span>{" "}
               to{" "}
               <span className="font-medium text-foreground">
-                {Math.min(currentPage * ITEMS_PER_PAGE, filteredCourses.length)}
+                {Math.min(
+                  currentPage * ITEMS_PER_PAGE,
+                  filteredSubjects.length
+                )}
               </span>{" "}
               of{" "}
               <span className="font-medium text-foreground">
-                {filteredCourses.length}
+                {filteredSubjects.length}
               </span>{" "}
               results
             </p>
@@ -244,25 +478,23 @@ const SubjectPage = () => {
         )}
       </div>
 
-      {/* Create course dialog */}
+      {/* Create subject dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Create New Course</DialogTitle>
+            <DialogTitle>Create New Subject</DialogTitle>
             <DialogDescription>
-              Fill in the details below to add a new course to the directory.
+              Fill in the details below to add a new subject to the repository.
             </DialogDescription>
           </DialogHeader>
-          <CreateNewCourseForm
-            departments={departments}
-            onSubmit={handleCreateCourse}
+          <CreateNewSubjectForm
+            courses={courses}
+            onSubmit={handleCreateSubject}
             isSubmitting={isSubmitting}
             onCancel={() => setIsDialogOpen(false)}
           />
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }
-
-export default SubjectPage

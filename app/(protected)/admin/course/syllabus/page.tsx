@@ -23,7 +23,7 @@ const SyllabusPage = async () => {
       </div>
     );
   }
-
+ 
   /* map department ID to course count */
   const courseCountMap = new Map<string, number>();
   courses?.forEach((c) => {

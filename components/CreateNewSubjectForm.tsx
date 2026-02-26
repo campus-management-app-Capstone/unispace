@@ -158,8 +158,8 @@ export default function CreateNewSubjectForm({
                             <FieldLabel htmlFor="create-subject-duration">Duration</FieldLabel>
                             <Select
                                 name={field.name}
-                                value={field.value}
-                                onValueChange={field.onChange}
+                                value={String(field.value)}
+                                onValueChange={(v) => field.onChange(Number(v))}
                             >
                                 <SelectTrigger
                                     id="create-subject-duration"
@@ -170,8 +170,8 @@ export default function CreateNewSubjectForm({
                                 </SelectTrigger>
                                 <SelectContent>
                                     {Durations.map((duration) => (
-                                        <SelectItem key={duration} value={duration}>
-                                            {duration}
+                                        <SelectItem key={duration} value={String(duration)}>
+                                            {duration} hr{duration > 1 ? "s" : ""}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -210,6 +210,16 @@ export default function CreateNewSubjectForm({
                     )}
                 />
             </FieldGroup>
+
+            {/* Actions */}
+            <div className="flex justify-end gap-2 pt-4">
+                <Button type="button" variant="outline" onClick={onCancel}>
+                    Cancel
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? "Creating..." : "Create Subject"}
+                </Button>
+            </div>
         </form>
     )
 }
