@@ -1,8 +1,6 @@
-// "use client";
-
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import * as z from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -21,26 +19,30 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 
-// constant for tutorial/lecture durations 
 const Durations = [1, 1.15, 1.30, 1.45, 2] as const;
 
-// zod schema for subject creation
+/** Zod schema for subject + syllabus creation */
 const subjectFormSchema = z.object({
     SubjectID: z.string().min(2, "Subject code must be at least 2 characters.").max(20, "Subject code must be at most 20 characters."),
     Name: z.string().min(3, "Subject name must be at least 3 characters.").max(100, "Subject name must be at most 100 characters."),
     CourseID: z.string().min(1, "Please select a course."),
-    Duration: z.number().int("Must be a whole number.").min(1, "At least 1 hour is required.").max(4, "Maximum 4 hours."),
+    Duration: z.number().min(1, "At least 1 hour is required.").max(4, "Maximum 4 hours."),
     Semester: z.number().int("Must be a whole number.").min(1, "At least semester 1 is required.").max(16, "Maximum semester 16."),
 });
 
 export type subjectFormValues = z.infer<typeof subjectFormSchema>;
 
 interface CreateNewSubjectFormProps {
-    courses: { CourseID: string; Name: string }[];
+    courses: { CourseID: string; Name: string; TotalSemester: number }[];
     onSubmit: (data: subjectFormValues) => Promise<void>;
     isSubmitting: boolean;
     onCancel: () => void;
 }
+
+/**
+ * CreateNewSubjectForm — creates a Subject and assigns it to a
+ * Course + Semester via the Syllabus table.
+ */
 export default function CreateNewSubjectForm({
     courses,
     onSubmit,
@@ -58,6 +60,20 @@ export default function CreateNewSubjectForm({
         },
     });
 
+    const selectedCourseID = useWatch({ control: form.control, name: "CourseID" });
+
+    /** Derive max semesters from the currently selected course */
+    const maxSemesters = useMemo(() => {
+        const course = courses.find((c) => c.CourseID === selectedCourseID);
+        return course?.TotalSemester ?? 8;
+    }, [courses, selectedCourseID]);
+
+    /** Generate semester options from 1..maxSemesters */
+    const semesterOptions = useMemo(
+        () => Array.from({ length: maxSemesters }, (_, i) => i + 1),
+        [maxSemesters]
+    );
+
     const handleFormSubmit = useCallback(
         async (data: subjectFormValues) => {
             await onSubmit(data);
@@ -68,7 +84,7 @@ export default function CreateNewSubjectForm({
 
     return (
         <form
-            id="create-course-form"
+            id="create-subject-form"
             onSubmit={form.handleSubmit(handleFormSubmit)}
             className="space-y-1"
         >
@@ -125,7 +141,10 @@ export default function CreateNewSubjectForm({
                             <Select
                                 name={field.name}
                                 value={field.value}
-                                onValueChange={field.onChange}
+                                onValueChange={(v) => {
+                                    field.onChange(v);
+                                    form.setValue("Semester", 1);
+                                }}
                             >
                                 <SelectTrigger
                                     id="create-subject-course"
@@ -183,26 +202,35 @@ export default function CreateNewSubjectForm({
                     )}
                 />
 
-                {/* Total Semesters */}
+                {/* Semester — which semester this subject is assigned to */}
                 <Controller
                     name="Semester"
                     control={form.control}
-                    render={({ field: { onChange, value, ...rest }, fieldState }) => (
+                    render={({ field, fieldState }) => (
                         <Field data-invalid={fieldState.invalid}>
-                            <FieldLabel htmlFor="create-course-semesters">
-                                Total Semesters
+                            <FieldLabel htmlFor="create-subject-semester">
+                                Semester
                             </FieldLabel>
-                            <Input
-                                {...rest}
-                                id="create-course-semesters"
-                                type="number"
-                                min={1}
-                                max={16}
-                                value={value}
-                                onChange={(e) => onChange(e.target.valueAsNumber || 0)}
-                                aria-invalid={fieldState.invalid}
-                                placeholder="e.g. 8"
-                            />
+                            <Select
+                                name={field.name}
+                                value={String(field.value)}
+                                onValueChange={(v) => field.onChange(Number(v))}
+                            >
+                                <SelectTrigger
+                                    id="create-subject-semester"
+                                    aria-invalid={fieldState.invalid}
+                                    className="w-full"
+                                >
+                                    <SelectValue placeholder="Select semester" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {semesterOptions.map((sem) => (
+                                        <SelectItem key={sem} value={String(sem)}>
+                                            Semester {sem}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                             {fieldState.invalid && (
                                 <FieldError errors={[fieldState.error]} />
                             )}
