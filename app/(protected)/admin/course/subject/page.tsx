@@ -40,8 +40,9 @@ import CreateNewSubjectForm, {
   type subjectFormValues,
 } from "@/components/CreateNewSubjectForm";
 
-/** Shape of a subject row joined with its course name */
+/** Shape of a syllabus entry joined with subject + course details */
 interface SubjectWithCourse {
+  SyllabusID: string;
   SubjectID: string;
   Name: string;
   CourseID: string;
@@ -84,7 +85,7 @@ export default function SubjectPage() {
     const [syllabusRes, courseRes] = await Promise.all([
       supabase
         .from("Syllabus")
-        .select("SubjectID, CourseID, Semester, Subject(Name, Duration)")
+        .select("SyllabusID, SubjectID, CourseID, Semester, Subject(Name, Duration)")
         .order("SubjectID"),
       supabase
         .from("Course")
@@ -95,17 +96,25 @@ export default function SubjectPage() {
     const courseMap = new Map<string, string>();
     (courseRes.data ?? []).forEach((c) => courseMap.set(c.CourseID, c.Name));
 
-    const merged: SubjectWithCourse[] = (syllabusRes.data ?? []).map((s) => {
+    const seen = new Set<string>();
+    const merged: SubjectWithCourse[] = [];
+
+    for (const s of syllabusRes.data ?? []) {
+      const dedupeKey = `${s.SubjectID}::${s.CourseID}::${s.Semester}`;
+      if (seen.has(dedupeKey)) continue;
+      seen.add(dedupeKey);
+
       const subject = s.Subject as { Name: string; Duration: number | null } | null;
-      return {
+      merged.push({
+        SyllabusID: s.SyllabusID,
         SubjectID: s.SubjectID,
         Name: subject?.Name ?? "",
         CourseID: s.CourseID ?? "",
         Duration: subject?.Duration ?? 0,
         Semester: s.Semester ?? 0,
         CourseName: courseMap.get(s.CourseID ?? "") ?? "Unassigned",
-      };
-    });
+      });
+    }
 
     setSubjects(merged);
     setCourses(courseRes.data ?? []);
@@ -156,11 +165,12 @@ export default function SubjectPage() {
       try {
         const supabase = createBrowserSupabaseClient();
 
-        const { error: subjectError } = await supabase.from("Subject").insert({
-          SubjectID: data.SubjectID,
-          Name: data.Name,
-          Duration: data.Duration,
-        });
+        const { error: subjectError } = await supabase
+          .from("Subject")
+          .upsert(
+            { SubjectID: data.SubjectID, Name: data.Name, Duration: data.Duration },
+            { onConflict: "SubjectID", ignoreDuplicates: true }
+          );
         if (subjectError) throw subjectError;
 
         const { error: syllabusError } = await supabase.from("Syllabus").insert({
@@ -344,7 +354,7 @@ export default function SubjectPage() {
               </TableRow>
             ) : (
               paginatedSubjects.map((subject) => (
-                <TableRow key={subject.SubjectID}>
+                <TableRow key={subject.SyllabusID}>
                   <TableCell className="text-center">
                     <div className="flex items-center justify-center gap-3">
 
