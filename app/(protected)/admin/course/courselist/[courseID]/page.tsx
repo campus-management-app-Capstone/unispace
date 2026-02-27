@@ -13,6 +13,8 @@ import {
   Clock,
   BarChart3,
   Building2,
+  Users,
+  CalendarDays,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -55,6 +57,12 @@ interface SemesterGroup {
   semester: number;
   subjects: SemesterSubject[];
   totalCredits: number;
+}
+
+/** An intake group with its student count */
+interface IntakeGroup {
+  intake: string;
+  studentCount: number;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -152,6 +160,8 @@ export default function CourseDetailPage() {
   const [course, setCourse] = useState<CourseDetail | null>(null);
   const [semesters, setSemesters] = useState<SemesterGroup[]>([]);
   const [openSemesters, setOpenSemesters] = useState<Set<number>>(new Set());
+  const [totalEnrolled, setTotalEnrolled] = useState(0);
+  const [intakes, setIntakes] = useState<IntakeGroup[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   /** Fetch course + department + syllabus data on mount / courseID change */
@@ -236,6 +246,35 @@ export default function CourseDetailPage() {
 
       setSemesters(groups);
       setOpenSemesters(new Set([1]));
+
+      // Fetch enrollment data for student count & intake breakdown
+      const { data: enrollmentData } = await supabase
+        .from("Enrollment")
+        .select("StudentID, Intake")
+        .eq("CourseID", courseID);
+
+      if (isCancelled) return;
+
+      const enrollments = enrollmentData ?? [];
+      const uniqueStudents = new Set(enrollments.map((e) => e.StudentID));
+      setTotalEnrolled(uniqueStudents.size);
+
+      // Group by intake and count distinct students per intake
+      const intakeMap = new Map<string, Set<string>>();
+      for (const e of enrollments) {
+        const existing = intakeMap.get(e.Intake) ?? new Set<string>();
+        existing.add(e.StudentID);
+        intakeMap.set(e.Intake, existing);
+      }
+
+      const intakeGroups: IntakeGroup[] = Array.from(intakeMap.entries())
+        .map(([intake, students]) => ({
+          intake,
+          studentCount: students.size,
+        }))
+        .sort((a, b) => b.intake.localeCompare(a.intake));
+
+      setIntakes(intakeGroups);
       setIsLoading(false);
     }
 
@@ -432,6 +471,7 @@ export default function CourseDetailPage() {
 
         {/* Right — Sidebar summary cards */}
         <div className="space-y-4">
+          {/* Course Summary */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Course Summary</CardTitle>
@@ -439,13 +479,23 @@ export default function CourseDetailPage() {
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">
-                  Total Subjects
+                  Total Enrolled
                 </span>
                 <span className="text-2xl font-bold text-foreground">
-                  {totalSubjects}
+                  {totalEnrolled.toLocaleString()}
                 </span>
               </div>
               <Separator />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-muted-foreground">Subjects</p>
+                  <p className="text-lg font-semibold">{totalSubjects}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Total Hours</p>
+                  <p className="text-lg font-semibold">{totalCredits}</p>
+                </div>
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs text-muted-foreground">Semesters</p>
@@ -454,45 +504,52 @@ export default function CourseDetailPage() {
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Total Hours</p>
-                  <p className="text-lg font-semibold">{totalCredits}</p>
+                  <p className="text-xs text-muted-foreground">Intakes</p>
+                  <p className="text-lg font-semibold">{intakes.length}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
+          {/* Active Intakes */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Semester Breakdown</CardTitle>
+              <CardTitle className="text-base">Active Intakes</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {semesters.map((group) => (
-                  <div
-                    key={group.semester}
-                    className="flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="flex size-6 items-center justify-center rounded bg-muted text-xs font-medium">
-                        {group.semester}
-                      </span>
-                      <span className="text-sm text-foreground">
-                        Semester {group.semester}
-                      </span>
+              {intakes.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No intakes found for this course.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {intakes.map((group) => (
+                    <div
+                      key={group.intake}
+                      className="flex items-center justify-between rounded-lg border px-3 py-2.5"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex size-8 items-center justify-center rounded-md bg-primary/10">
+                          <CalendarDays className="size-4 text-primary" />
+                        </div>
+                        <span className="text-sm font-medium text-foreground">
+                          {group.intake}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Users className="size-3.5 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">
+                          {group.studentCount}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <Badge variant="outline" className="text-xs">
-                        {group.subjects.length} subjects
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        {group.totalCredits} hrs
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
+
+          
         </div>
       </div>
     </div>
