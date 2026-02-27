@@ -57,7 +57,7 @@ interface Course {
   TotalSemester: number;
 }
 
-const ITEMS_PER_PAGE = 5;
+const ITEMS_PER_PAGE = 7;
 
 /**
  * SubjectPage — client-side subject repository
