@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { createBrowserSupabaseClient } from "@/lib/supabase-browser";
 import { toast } from "sonner";
 import {
@@ -73,6 +74,7 @@ const levelColorMap: Record<string, string> = {
  * search, department filter, level filter, and pagination.
  */
 export default function CourseListPage() {
+  const router = useRouter();
   const [courses, setCourses] = useState<CourseWithDepartment[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -361,7 +363,15 @@ export default function CourseListPage() {
               </TableRow>
             ) : (
               paginatedCourses.map((course) => (
-                <TableRow key={course.CourseID}>
+                <TableRow
+                  key={course.CourseID}
+                  className="cursor-pointer"
+                  onClick={() =>
+                    router.push(
+                      `/admin/course/courselist/${course.CourseID}`
+                    )
+                  }
+                >
                   <TableCell className="text-center">
                     <div className="flex items-center justify-center gap-3">
                       
