@@ -62,11 +62,6 @@ const courseSubItems = [
     icon: BookText, 
   },
   { 
-    label: "Syllabus", 
-    href: "/admin/course/syllabus", 
-    icon: FileText, 
-  },
-  { 
     label: "Class", 
     href: "/admin/course/class", 
     icon: School, 
