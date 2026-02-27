@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { getUserWallet } from '@/lib/wallet/wallet-actions';
+import { TopupButton } from "@/components/TopUpModal";
+
 import {
     Select,
     SelectContent,
@@ -107,24 +109,19 @@ const Page = () => {
                             <p className="text-5xl font-bold tracking-tight">RM {wallet?.Balance?.toFixed(2) ?? "0.00"}</p>
                         </div>
 
-                        <Button
-                            variant="secondary"
-                            className="w-full sm:w-auto bg-white text-blue-700 hover:bg-blue-50 font-semibold px-8 rounded-full cursor-pointer transition-colors"
-                        >
-                            Top up
-                        </Button>
+                        <TopupButton currentBalance={wallet?.Balance?.toFixed(2) ?? "0.00"} />
                     </div>
                 </div>
 
                 {/* transantions */}
                 <div className="flex-1 min-h-0 flex flex-col space-y-4">
                     <div className="flex justify-between items-center pb-2">
-                        <h2 className="text-xl font-bold text-gray-800">Recent</h2>
+                        <h2 className="text-xl font-bold text-gray-800">Transactions</h2>
 
                         <div className="flex items-center gap-2">
                             {/* month filter */}
                             <Select onValueChange={(month) => setFilterMonth(month)}>
-                                <SelectTrigger className="w-[110px]">
+                                <SelectTrigger className="w-[80px] bg-white border border-gray-300 shadow-sm text-gray-900 font-medium hover:bg-gray-50 hover:border-blue-400 transition-colors focus:ring-2 focus:ring-blue-500">
                                     <SelectValue placeholder="Month" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -141,7 +138,7 @@ const Page = () => {
 
                             {/* year filter */}
                             <Select onValueChange={(year) => setFilterYear(year)}>
-                                <SelectTrigger className="w-[100px]">
+                                <SelectTrigger className="w-[80px] bg-white border border-gray-300 shadow-sm text-gray-900 font-medium hover:bg-gray-50 hover:border-blue-400 transition-colors focus:ring-2 focus:ring-blue-500">
                                     <SelectValue placeholder="Year" />
                                 </SelectTrigger>
                                 <SelectContent>
