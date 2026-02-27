@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from '@supabase/supabase-js';
 import { auth } from "@clerk/nextjs/server";
 import type { Database } from "@/types/supabase";
 
