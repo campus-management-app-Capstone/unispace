@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { getUserWallet } from '@/lib/wallet/wallet-actions';
 import { TopupButton } from "@/components/TopUpModal";
 
 import {
@@ -14,6 +13,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { toast } from "react-toastify";
 
 // format date time
 const formatDateTime = (dateString: string) => {
@@ -61,20 +61,33 @@ const Page = () => {
     const [filterMonth, setFilterMonth] = useState<string>("");
     const [filterYear, setFilterYear] = useState<string>("");
 
-    useEffect(() => {
-        console.log("Month: " + filterMonth);
-        console.log("Year: " + filterYear);
-    },
-    [filterMonth, filterYear]);
+    // useEffect(() => {
+    //     console.log("Month: " + filterMonth);
+    //     console.log("Year: " + filterYear);
+    // },
+    // [filterMonth, filterYear]);
 
     useEffect(() => {
-        getUserWallet()
-            .then((res) => {
-                setWallet(res.data);
-            })
-            .catch((err) => {
-                console.error("Failed to load wallet", err);
-            });
+        toast("Loading...");
+        const fetchWalletData = async () => {
+            try {
+                const response = await fetch('/api/wallet');
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    // Save the data object into your state
+                    setWallet(result.data);
+                    toast("Loading Completed");
+                } else {
+                    toast.error(result.error || "Failed to load wallet");
+                }
+            } catch (err) {
+                console.error("Fetch crashed:", err);
+                toast.error("Network error occurred.");
+            }
+        };
+
+        fetchWalletData();
     }, []);
 
     let filteredTransactions = wallet?.Transaction?.filter((tx: any) => {

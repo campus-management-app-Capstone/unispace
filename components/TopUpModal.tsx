@@ -1,17 +1,43 @@
 import { Button } from "@base-ui/react";
 import { useEffect, useState } from "react";
 import { X, Wallet, Zap, Lock, Wallet2 } from "lucide-react";
+import { toast } from "react-toastify";
+import { redirect } from "next/dist/server/api-utils";
+import { createTopUpSession } from "@/lib/wallet/wallet-actions";
 
 // top up pop up when user click top up button
 export const TopupButton = ({ currentBalance }) => {
 
     const [showModal, setShowModal] = useState(false);
     const [inputAmount, setInputAmount] = useState(0.00);
+    const [isLoading, setIsLoading] = useState(false);
 
-    // useEffect(()=>{
-    //     console.log("Input Amount: " + inputAmount);
-    // }
-    // ,[inputAmount]);
+    // // useEffect(()=>{
+    // //     console.log("Input Amount: " + inputAmount);
+    // // }
+    // // ,[inputAmount]);
+
+    // top up handler
+    const handleTopUp = async () => {
+        // min 5
+        if (!inputAmount || inputAmount < 5) {
+            toast.error("Minimum Top Up Amount is RM 5.00");
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            // pass object ({amount}) per helper signature
+            const checkoutUrl = await createTopUpSession({ amount: inputAmount });
+
+            if (checkoutUrl) {
+                window.location.href = checkoutUrl;
+            }
+        } catch (error) {
+            console.log("Top Up Failed: " + error);
+            setIsLoading(false);
+        }
+    }
 
     return (
         <div>
@@ -33,7 +59,10 @@ export const TopupButton = ({ currentBalance }) => {
                             <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Top Up Balance</h1>
 
                             <button
-                                onClick={() => setShowModal(false)}
+                                onClick={() => {
+                                    setShowModal(false);
+                                    setInputAmount(0.00);
+                                }}
                                 className="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 transition-colors"
                             >
                                 <X className="h-5 w-5" />
@@ -41,7 +70,7 @@ export const TopupButton = ({ currentBalance }) => {
                         </div>
 
                         {/* --- Content --- */}
-                        <div className="p-6">
+                        <div className="p-4">
 
                             {/* Current Balance */}
                             <div className="mb-6 p-4 rounded-lg bg-blue-50 border border-blue-100 dark:bg-blue-900/20 dark:border-blue-800 flex items-center justify-between">
@@ -92,23 +121,31 @@ export const TopupButton = ({ currentBalance }) => {
                                     <input className="block w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-bold text-lg placeholder:font-normal placeholder:text-slate-400 transition-all"
                                         id="amount"
                                         name="amount"
-                                        placeholder="0.00"
+                                        placeholder="0"
                                         type="number"
                                         value={inputAmount}
-                                        onChange={(e)=>{setInputAmount(e.target.value)}}
+                                        onChange={(e) => { setInputAmount(Math.round(e.target.value)) }}
                                     />
                                 </div>
+                                <p className="mt-2 text-xs text-slate-500">Minimum top-up amount is RM 5.00</p>
                             </div>
 
                             {/* --- Actions --- */}
                             <div className="space-y-3">
-                                <button className="w-full flex items-center justify-center gap-2 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-base transition-all shadow-lg shadow-blue-600/20">
+                                <button
+                                    className="w-full flex items-center justify-center gap-2 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-base transition-all shadow-lg shadow-blue-600/20"
+                                    onClick={handleTopUp}
+                                    disabled={isLoading}
+                                >
                                     <Zap />
-                                    Confirm Top Up
+                                    {isLoading? "Redirecting to Payment..." : "Confirm Top Up"}
                                 </button>
 
                                 <button
-                                    onClick={() => setShowModal(false)}
+                                    onClick={() => {
+                                        setShowModal(false);
+                                        setInputAmount(0.00);
+                                    }}
                                     className="w-full h-12 bg-transparent hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-lg font-semibold text-sm transition-all"
                                 >
                                     Cancel and Return
