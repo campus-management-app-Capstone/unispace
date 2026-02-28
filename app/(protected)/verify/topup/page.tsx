@@ -52,6 +52,9 @@ const page = () => {
                     setIsSuccess(false);
                     setVerifying(false);
                 }
+            } else {
+                setIsSuccess(false);
+                setVerifying(false);
             }
         } else {
             setIsSuccess(false);
@@ -90,7 +93,7 @@ const page = () => {
                         </div>
                     </main>
 
-                : isSuccess ?
+                    : isSuccess ?
 
                         // success ui
                         <main className="flex-1 flex flex-col items-center justify-center px-4 py-12 md:py-20">
@@ -147,7 +150,7 @@ const page = () => {
                                 </div>
                                 {/* <!-- Action Buttons --> */}
                                 <div className="flex flex-col sm:flex-row gap-4 w-full">
-                                    <button 
+                                    <button
                                         className="flex-1 flex items-center justify-center rounded-lg h-14 bg-primary text-white text-lg font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 cursor-pointer"
                                         onClick={() => router.push("/wallet")}
                                     >
@@ -174,11 +177,11 @@ const page = () => {
                                 </p>
                                 {/* <!-- Action Buttons --> */}
                                 <div className="flex flex-col gap-3">
-                                    <button 
+                                    <button
                                         className="flex items-center justify-center rounded-lg h-12 px-5 bg-primary hover:bg-primary/90 text-white text-base font-bold leading-normal transition-colors w-full shadow-lg shadow-primary/20 gap-2 cursor-pointer"
                                         onClick={() => router.push("/wallet")}
                                     >
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 810" width="24" height="24" fill="#FFFFFF" className="opacity:1;"><path  d="M403 3q67 0 127 24t106 68t74 102t31 126q3 72-22 136t-71 112t-108 76t-135 28q-58 0-110-19t-95-51q-4-3-4-9t3-9l50-49q7-7 15-2q30 22 66 34t75 12q54 0 101-22t81-59t50-86t10-104q-5-41-23-78t-46-65t-64-47t-78-24q-54-6-102 9t-86 48t-60 76t-25 97h69L116 466L0 327h70q2-67 29-126t72-103t105-70T403 3"/></svg>
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 810" width="24" height="24" fill="#FFFFFF" className="opacity:1;"><path d="M403 3q67 0 127 24t106 68t74 102t31 126q3 72-22 136t-71 112t-108 76t-135 28q-58 0-110-19t-95-51q-4-3-4-9t3-9l50-49q7-7 15-2q30 22 66 34t75 12q54 0 101-22t81-59t50-86t10-104q-5-41-23-78t-46-65t-64-47t-78-24q-54-6-102 9t-86 48t-60 76t-25 97h69L116 466L0 327h70q2-67 29-126t72-103t105-70T403 3" /></svg>
                                         <span>Try Again</span>
                                     </button>
                                 </div>

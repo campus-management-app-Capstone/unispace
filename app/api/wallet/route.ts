@@ -39,6 +39,7 @@ export async function GET() {
     return NextResponse.json({ success: true, data });
 }
 
+// topup or paymeht
 export async function POST(request: NextRequest) {
     const { sessionClaims } = await auth();
     const userId = sessionClaims?.sub;
@@ -51,9 +52,17 @@ export async function POST(request: NextRequest) {
         // for is reserved argument
         const { amount, type, for: forField, stripeSessionID } = body;
 
-        if (!amount || !type || !forField || !stripeSessionID) {
+        // check required field
+        // stripeSessionID is only required for topup.
+        const missingFields: string[] = [];
+        if (!amount) missingFields.push('amount');
+        if (!type) missingFields.push('type');
+        if (!forField) missingFields.push('for');
+        if (type === 'Top up' && !stripeSessionID) missingFields.push('stripeSessionID');
+
+        if (missingFields.length > 0) {
             return NextResponse.json(
-                { error: 'Missing required fields: amount, type, for' },
+                { error: `Missing required fields: ${missingFields.join(', ')}` },
                 { status: 400 }
             );
         }
@@ -94,7 +103,7 @@ export async function POST(request: NextRequest) {
                     Amount: amount,
                     Type: type,
                     For: forField,
-                    StripeSessionID: stripeSessionID
+                    StripeSessionID: stripeSessionID ?? null    
                 },
             ])
             .select()
