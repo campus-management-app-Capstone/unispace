@@ -60,6 +60,7 @@ const Page = () => {
     const [wallet, setWallet] = useState<any>(null);
     const [filterMonth, setFilterMonth] = useState<string>("");
     const [filterYear, setFilterYear] = useState<string>("");
+    const [isLoading, setIsLoading] = useState(true);
 
     // useEffect(() => {
     //     console.log("Month: " + filterMonth);
@@ -68,7 +69,7 @@ const Page = () => {
     // [filterMonth, filterYear]);
 
     useEffect(() => {
-        toast("Loading...");
+        const id = toast.loading("Loading…");
         const fetchWalletData = async () => {
             try {
                 const response = await fetch('/api/wallet');
@@ -77,7 +78,13 @@ const Page = () => {
                 if (response.ok && result.success) {
                     // Save the data object into your state
                     setWallet(result.data);
-                    toast("Loading Completed");
+
+                    toast.update(id, {                
+                        render: "Loading completed",
+                        type: "success",
+                        isLoading: false,
+                        autoClose: 2000,
+                    });
                 } else {
                     toast.error(result.error || "Failed to load wallet");
                 }
@@ -85,6 +92,7 @@ const Page = () => {
                 console.error("Fetch crashed:", err);
                 toast.error("Network error occurred.");
             }
+            setIsLoading(false);
         };
 
         fetchWalletData();
@@ -100,6 +108,10 @@ const Page = () => {
         }
         return true;
     });
+
+    if (isLoading) {
+        return
+    }
 
     return (
         <div className="relative h-screen overflow-hidden">

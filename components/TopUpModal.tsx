@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { X, Wallet, Zap, Lock, Wallet2 } from "lucide-react";
 import { toast } from "react-toastify";
 import { redirect } from "next/dist/server/api-utils";
-import { createTopUpSession } from "@/lib/wallet/wallet-actions";
+import { createTopUpSession } from "@/lib/wallet/wallet-actions"; 
 
 // top up pop up when user click top up button
 export const TopupButton = ({ currentBalance }) => {
