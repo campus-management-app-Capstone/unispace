@@ -7,6 +7,7 @@ import { Delete, Edit, LogOut, ParkingCircle, Plus, Trash } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
 import ParkingCost from '@/components/ParkingCost'
+import EditVehicle from '@/components/EditVehicle'
 
 const page = () => {
 
@@ -142,11 +143,6 @@ const page = () => {
         }
     }
 
-    const handleEdit = (car) => {
-
-        fetchCarData();
-    }
-
     const handleEndSession = () => {
 
         fetchCarData();
@@ -248,13 +244,8 @@ const page = () => {
                                                         <ParkingCircle /> Park Now
                                                     </button>
                                                 }
-
-                                                <button
-                                                    className="px-3 bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-primary rounded-lg transition-colors cursor-pointer"
-                                                    onClick={() => handleEdit(car)}
-                                                >
-                                                    <Edit />
-                                                </button>
+                                                <EditVehicle onVehicleEdited={()=>fetchCarData()} car={car}/>
+                                                
                                                 <button
                                                     className="px-3 bg-red-100 dark:bg-red-800 text-red-500 hover:bg-red-200 rounded-lg transition-colors cursor-pointer"
                                                     onClick={() => handleDelete(car)}

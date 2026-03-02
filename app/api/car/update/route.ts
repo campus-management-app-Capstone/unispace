@@ -1,6 +1,8 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { createBrowserSupabaseClient } from "@/lib/supabase-browser";
+import { User } from 'lucide-react';
+import { success } from 'zod';
 
 export async function POST(request: NextRequest) {
     const { sessionClaims } = await auth();
@@ -13,13 +15,13 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
 
         // checking
-        const {Carplate, VehicleMade, VehicleModel} = body;
+        const {RegisteredCarID, Carplate, VehicleMade, VehicleModel} = body;
 
         const missingFields: string[] = [];
+        if (!RegisteredCarID) missingFields.push('car id');
         if (!Carplate) missingFields.push('carplate');
         if (!VehicleMade) missingFields.push('vehicle made');
         if (!VehicleModel) missingFields.push('vehicle model');
-
         if (missingFields.length > 0) {
             return NextResponse.json(
                 { error: `Missing required fields: ${missingFields.join(', ')}` },
@@ -27,30 +29,21 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        
-
-        // inserting
         const supabase = await createBrowserSupabaseClient();
-        const {data, error} = await supabase
+
+        const { error } = await supabase
         .from("RegisteredCar")
-        .insert([
-            {
-                UserID,
-                Carplate,
-                VehicleMade,
-                VehicleModel
-            }
-        ])
-        .single();
+        .update({
+            Carplate: Carplate,
+            VehicleMade: VehicleMade,
+            VehicleModel: VehicleModel
+        })
+        .eq("RegisteredCarID", RegisteredCarID)
+        .eq("UserID", UserID);
 
         if (error) {
-            return NextResponse.json(
-                { error: 'Failed to add vehicle: ' + error.message },
-                { status: 500 }
-            );
+            return NextResponse.json({error: error.message}, {status: 500});
         }
-
-
 
         // success
         return NextResponse.json(
@@ -60,8 +53,10 @@ export async function POST(request: NextRequest) {
             { status: 201 }
         );
 
+
+
     } catch (error) {
-        console.error('Add Car POST error:', error);
+        console.error('Save Car POST error:', error);
         return NextResponse.json(
             { error: 'Internal server error' },
             { status: 500 }

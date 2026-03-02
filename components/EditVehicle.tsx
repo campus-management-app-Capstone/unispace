@@ -1,14 +1,15 @@
-import { Badge, Car, Info, Palette, Plus, Train, Verified, X } from 'lucide-react';
+import { Badge, Car, Edit, Info, Palette, Plus, Save, Train, Verified, X } from 'lucide-react';
 import React, { useState } from 'react'
 import { toast } from 'react-toastify';
 
-const VehiclePopup = ({ onVehicleAdded }) => {
-    const [isAdding, setIsAdding] = useState(false);
+const EditVehicle = ({ onVehicleEdited, car }) => {
+    const [isEditing, setIsEditing] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [formData, setFormData] = useState({
-        Carplate: '',
-        VehicleMade: '',
-        VehicleModel: ''
+        RegisteredCarID: car.RegisteredCarID,
+        Carplate: car.Carplate,
+        VehicleMade: car.VehicleMade,
+        VehicleModel: car.VehicleModel
     });
 
     const handleInputChange = (e) => {
@@ -19,7 +20,7 @@ const VehiclePopup = ({ onVehicleAdded }) => {
         }));
     }
 
-    const handleAdd = async () => {
+    const handleSave = async () => {
         // Validation
         if (!formData.Carplate.trim() || !formData.VehicleMade.trim() || !formData.VehicleModel.trim()) {
             toast.error("Please fill in all fields");
@@ -27,13 +28,14 @@ const VehiclePopup = ({ onVehicleAdded }) => {
         }
 
         setIsLoading(true);
-        const id = toast.loading("Adding ...");
+        const id = toast.loading("Saving ...");
 
         try {
-            const response = await fetch("/api/car/add", {
+            const response = await fetch("/api/car/update", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
+                    RegisteredCarID: formData.RegisteredCarID,
                     Carplate: formData.Carplate.toUpperCase().replaceAll(' ', ''),
                     VehicleMade: formData.VehicleMade,
                     VehicleModel: formData.VehicleModel
@@ -43,35 +45,36 @@ const VehiclePopup = ({ onVehicleAdded }) => {
             const result = await response.json();
 
             if (response.ok && result.success) {
+                setFormData({
+                    RegisteredCarID: car.RegisteredCarID,
+                    Carplate: car.Carplate,
+                    VehicleMade: car.VehicleMade,
+                    VehicleModel: car.VehicleModel
+                });
+                setIsEditing(false);
                 toast.update(id, {
-                    render: "Added Successfully",
+                    render: "Changes Saved",
                     type: "success",
                     isLoading: false,
                     autoClose: 2000,
                 });
-                setFormData({
-                    Carplate: '',
-                    VehicleMade: '',
-                    VehicleModel: ''
-                });
-                setIsAdding(false);
 
-                if (onVehicleAdded) {
-                    onVehicleAdded();
+                if (onVehicleEdited) {
+                    onVehicleEdited();
                 }
 
             } else {
                 toast.update(id, {
-                    render: "Failed to Add. Please ensure the details are correct",
+                    render: "The car plate might have registered. Please ensure the details are correct.",
                     type: "error",
                     isLoading: false,
                     autoClose: 2000,
                 });
             }
         } catch (err) {
-            console.error("Fetch crashed:", err);
+            console.error("Save crashed:", err);
             toast.update(id, {
-                render: ("Add crashed:" + err),
+                render: ("Save crashed:" + err),
                 type: "error",
                 isLoading: false,
                 autoClose: 2000,
@@ -83,18 +86,14 @@ const VehiclePopup = ({ onVehicleAdded }) => {
 
 
     return (
-        <div className="w-full h-full">
+        <>
             <button
-                className="w-full group border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl flex flex-col items-center justify-center p-8 transition-all hover:border-primary hover:bg-primary/5 h-full cursor-pointer shadow-sm hover:shadow-md transition-shadow relative overflow-hidden"
-                onClick={() => setIsAdding(true)}
+                className="px-3 bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-primary rounded-lg transition-colors cursor-pointer"
+                onClick={() => setIsEditing(true)}
             >
-                <div className="size-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-white transition-colors">
-                    <Plus />
-                </div>
-                <span className="font-bold text-slate-900 dark:text-white">Add New Vehicle</span>
-                <p className="text-slate-500 text-sm text-center mt-2 px-4">Register a new car for easy one-tap parking</p>
+                <Edit />
             </button>
-            {isAdding ?
+            {isEditing ?
                 <div>
                     {/* -Modal Overlay */}
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4">
@@ -102,10 +101,18 @@ const VehiclePopup = ({ onVehicleAdded }) => {
                         <div className="w-full min-h-[250px] max-w-[520px] bg-white dark:bg-[#192633] rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
                             {/* <!-- Header --> */}
                             <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-800">
-                                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Add New Vehicle</h2>
+                                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Edit Vehicle</h2>
                                 <button
                                     className="cursor-pointer p-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white rounded-full transition-colors"
-                                    onClick={() => setIsAdding(false)}
+                                    onClick={() => {
+                                        setIsEditing(false)
+                                        setFormData({
+                                            RegisteredCarID: car.RegisteredCarID,
+                                            Carplate: car.Carplate,
+                                            VehicleMade: car.VehicleMade,
+                                            VehicleModel: car.VehicleModel
+                                        });
+                                    }}
                                 >
                                     <X />
                                 </button>
@@ -170,25 +177,33 @@ const VehiclePopup = ({ onVehicleAdded }) => {
                             <div className="p-6 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3 bg-slate-50/50 dark:bg-[#111a22]/50">
                                 <button
                                     className="cursor-pointer h-11 px-6 rounded-lg font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
-                                    onClick={() => setIsAdding(false)}
+                                    onClick={() => {
+                                        setIsEditing(false)
+                                        setFormData({
+                                            RegisteredCarID: car.RegisteredCarID,
+                                            Carplate: car.Carplate,
+                                            VehicleMade: car.VehicleMade,
+                                            VehicleModel: car.VehicleModel
+                                        });
+                                    }}
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     disabled={isLoading} // prevent double click
                                     className="cursor-pointer h-11 px-6 rounded-lg font-bold bg-primary text-white hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all flex items-center gap-2"
-                                    onClick={() => handleAdd()}
+                                    onClick={() => handleSave()}
                                 >
-                                    <Plus />
-                                    {isLoading ? "Adding ..." : "Add Vehicle"}
+                                    <Save />
+                                    {isLoading ? "Saving ..." : "Save Vehicle"}
                                 </button>
                             </div>
                         </div>
                     </div >
                 </div>
                 : null}
-        </div>
+        </>
     )
 }
 
-export default VehiclePopup
+export default EditVehicle
