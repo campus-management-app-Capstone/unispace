@@ -13,13 +13,10 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
 
         // checking
-        const {RegisteredCarID, Carplate, VehicleMade, VehicleModel} = body;
+        const { RegisteredCarID } = body;
 
         const missingFields: string[] = [];
         if (!RegisteredCarID) missingFields.push('car id');
-        if (!Carplate) missingFields.push('carplate');
-        if (!VehicleMade) missingFields.push('vehicle made');
-        if (!VehicleModel) missingFields.push('vehicle model');
         if (missingFields.length > 0) {
             return NextResponse.json(
                 { error: `Missing required fields: ${missingFields.join(', ')}` },
@@ -29,18 +26,37 @@ export async function POST(request: NextRequest) {
 
         const supabase = await createBrowserSupabaseClient();
 
-        const { error } = await supabase
-        .from("RegisteredCar")
-        .update({
-            Carplate: Carplate,
-            VehicleMade: VehicleMade,
-            VehicleModel: VehicleModel
-        })
-        .eq("RegisteredCarID", RegisteredCarID)
-        .eq("UserID", UserID);
+        // prevent double park
+        const { data: existingSession } = await supabase
+            .from('ParkingSession')
+            .select('ParkingSessionID')
+            .eq('RegisteredCarID', RegisteredCarID)
+            .is('End', null) // Look for an active session
+            .maybeSingle();
 
+        if (existingSession) {
+            return NextResponse.json({ error: 'This car is already parked!' }, { status: 400 });
+        }
+
+        // check available slot
+        // get curretn count
+        const maxCarparkCapacity = 400;
+        const { count } = await supabase
+            .from('ParkingSession')
+            .select('*', { count: 'exact', head: true })
+            .is('End', null);
+
+        if ((count || 0) >= maxCarparkCapacity) {
+            return NextResponse.json({ error: 'The parking lot is completely full.' }, { status: 400 });
+        }
+
+        const { error } = await supabase
+            .from("ParkingSession")
+            .insert({
+                RegisteredCarID: RegisteredCarID
+            })
         if (error) {
-            return NextResponse.json({error: error.message}, {status: 500});
+            return NextResponse.json({ error: error.message }, { status: 500 });
         }
 
         // success

@@ -15,6 +15,8 @@ const page = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [carparkAvailability, setCarparkAvailability] = useState(0);
     const maxCarparkCapacity = 400;
+    const [isEndingSession, setIsEndingSession] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     // get car park avalability
     const fetchAvailability = async () => {
@@ -94,7 +96,7 @@ const page = () => {
     console.log("carInfo: " + JSON.stringify(carInfo));
 
     const parkPercent = Math.floor((carparkAvailability / maxCarparkCapacity) * 100);
-    const dynamicOffset = 100 - parkPercent;
+    // const dynamicOffset = 100 - parkPercent;
 
     if (isLoading) {
         return
@@ -104,9 +106,16 @@ const page = () => {
         const isConfirmed = window.confirm("Are you sure you want to remove this vehicle?");
         if (!isConfirmed) return;
 
+        const activeSession = car.ParkingSession?.[0];
+        if (activeSession) {
+            toast.error("You car is currently on park!");
+            return;
+        }
+
+        setIsDeleting(true);
         const id = toast.loading("Deleting ...");
         try {
-            const response = await fetch("/api/car/delete", {            
+            const response = await fetch("/api/car/delete", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -140,16 +149,144 @@ const page = () => {
                 isLoading: false,
                 autoClose: 2000,
             });
+        } finally {
+            setIsDeleting(false);
         }
     }
 
-    const handleEndSession = () => {
+    const handleEndSession = async (car) => {
+        setIsEndingSession(true);
+        // check is parking?
+        const activeSession = car.ParkingSession?.[0];
+        if(!activeSession) return;
 
-        fetchCarData();
+        // call wallet to process transaction
+        // call endsession to insert end
+        const id = toast.loading("Processing Payment ...");
+
+        // process payment
+        try {
+            const cost = getParkingCost(activeSession.Start);
+            const response = await fetch("/api/wallet", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    amount: cost,
+                    type: "Payment",
+                    for: "Parking",
+                })
+            })
+            const result = await response.json();
+
+            if (!response.ok && result.error) {
+                console.error("Failed to Pay:", result.error);
+                toast.update(id, {
+                    render: "Failed to Pay",
+                    type: "error",
+                    isLoading: false,
+                    autoClose: 2000,
+                });
+                setIsEndingSession(false);
+                return;
+            }
+
+        } catch (error) {
+            console.error("Failed to Pay:", error);
+            toast.update(id, {
+                render: "Failed to Pay",
+                type: "error",
+                isLoading: false,
+                autoClose: 2000,
+            });
+            setIsEndingSession(false);
+            return;
+        }
+
+        // end session after process payment
+        try {
+            const response = await fetch("/api/parking/endsession", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    RegisteredCarID: car.RegisteredCarID,
+                    ParkingSessionID: activeSession.ParkingSessionID
+                })
+            });
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                toast.update(id, {
+                    render: "Parking Paid.",
+                    type: "success",
+                    isLoading: false,
+                    autoClose: 2000,
+                });
+                fetchCarData();
+            } else {
+                console.log(result.error || "Failed to end parking session.");
+                toast.update(id, {
+                    render: "Failed to end parking session.",
+                    type: "error",
+                    isLoading: false,
+                    autoClose: 2000,
+                });
+            }
+        } catch (error) {
+            console.error("End Session crashed:", error);
+            toast.update(id, {
+                render: "Network error occurred",
+                type: "error",
+                isLoading: false,
+                autoClose: 2000,
+            });
+        } finally {
+            setIsEndingSession(false);
+        }
     }
 
-    const handleParkNow = (car) => {
+    const handleParkNow = async (car) => {
+        if (carparkAvailability <= 0) {
+            toast.error("Parking Slot Full!");
+            return
+        }
 
+        const id = toast.loading("Parking ...");
+        try {
+            const response = await fetch("/api/parking/parknow", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    RegisteredCarID: car.RegisteredCarID
+                })
+            });
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                toast.update(id, {
+                    render: "Parked",
+                    type: "success",
+                    isLoading: false,
+                    autoClose: 2000,
+                });
+                fetchCarData();
+            } else {
+                console.log(result.error || "Failed to Park.");
+                toast.update(id, {
+                    render: "Failed to Park",
+                    type: "error",
+                    isLoading: false,
+                    autoClose: 2000,
+                });
+            }
+        } catch (error) {
+            console.error("Fetch crashed:", error);
+            toast.update(id, {
+                render: "Network error occurred",
+                type: "error",
+                isLoading: false,
+                autoClose: 2000,
+            });
+        }
     }
 
     return (
@@ -159,16 +296,16 @@ const page = () => {
                     <div className="bg-gradient-to-br from-primary to-blue-700 rounded-2xl p-8 text-white shadow-xl shadow-primary/20">
                         <div className="flex flex-col md:flex-row items-center justify-between gap-8">
                             <div className="space-y-2 text-center md:text-left">
-                                <h1 className="text-3xl font-extrabold tracking-tight">Real-time Parking Status (Remember to not allow user to park if there are no parking slot, toast("You have parked illegally?"))</h1>
+                                <h1 className="text-3xl font-extrabold tracking-tight">Real-time Parking Status</h1>
                             </div>
                             <div className="flex items-center gap-8 bg-white/10 backdrop-blur-md p-6 rounded-xl border border-white/20">
                                 <div className="relative size-24 flex items-center justify-center">
                                     <svg className="size-full -rotate-90" viewBox="0 0 36 36">
                                         <circle className="stroke-white/20" cx="18" cy="18" fill="none" r="16" strokeWidth="3"></circle>
-                                        <circle className="stroke-white" cx="18" cy="18" fill="none" r="16" strokeDasharray="100" strokeDashoffset={dynamicOffset} strokeWidth="3"></circle>
+                                        <circle className="stroke-white" cx="18" cy="18" fill="none" r="16" strokeDasharray="100" strokeDashoffset={parkPercent} strokeWidth="3"></circle>
                                     </svg>
                                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                        <span className="text-2xl font-bold">{dynamicOffset}%</span>
+                                        <span className="text-2xl font-bold">{parkPercent}%</span>
                                     </div>
                                 </div>
                                 <div className="flex flex-col">
@@ -232,21 +369,29 @@ const page = () => {
                                             <div className="flex gap-2">
                                                 {activeSession ?
                                                     <button
+                                                        disabled={isEndingSession}
                                                         className="cursor-pointer flex-1 bg-slate-100 dark:bg-slate-800 hover:bg-red-500 hover:text-white text-slate-900 dark:text-slate-100 font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2"
-                                                        onClick={() => handleEndSession()}
+                                                        onClick={() => handleEndSession(car)}
                                                     >
                                                         <LogOut /> End Session
                                                     </button> :
                                                     <button
-                                                        className="cursor-pointer flex-1 bg-primary hover:bg-blue-600 text-white font-bold py-3 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
-                                                        onClick={() => handleParkNow(car)}
+                                                        disabled={carparkAvailability <= 0}
+                                                        className={`flex-1 font-bold py-3 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-lg 
+                                                                ${carparkAvailability <= 0
+                                                                ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none' // Full look
+                                                                : 'bg-primary hover:bg-blue-600 text-white cursor-pointer shadow-primary/20' // Normal look
+                                                            }`
+                                                        } onClick={() => handleParkNow(car)}
                                                     >
-                                                        <ParkingCircle /> Park Now
+                                                        <ParkingCircle />
+                                                        {carparkAvailability <= 0 ? "Lot Full" : "Park Now"}
                                                     </button>
                                                 }
-                                                <EditVehicle onVehicleEdited={()=>fetchCarData()} car={car}/>
-                                                
+                                                <EditVehicle onVehicleEdited={() => fetchCarData()} car={car} />
+
                                                 <button
+                                                    disabled={isDeleting}
                                                     className="px-3 bg-red-100 dark:bg-red-800 text-red-500 hover:bg-red-200 rounded-lg transition-colors cursor-pointer"
                                                     onClick={() => handleDelete(car)}
                                                 >

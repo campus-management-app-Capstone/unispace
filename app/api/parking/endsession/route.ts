@@ -13,13 +13,11 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
 
         // checking
-        const {RegisteredCarID, Carplate, VehicleMade, VehicleModel} = body;
+        const { ParkingSessionID, RegisteredCarID } = body;
 
         const missingFields: string[] = [];
-        if (!RegisteredCarID) missingFields.push('car id');
-        if (!Carplate) missingFields.push('carplate');
-        if (!VehicleMade) missingFields.push('vehicle made');
-        if (!VehicleModel) missingFields.push('vehicle model');
+        if (!ParkingSessionID) missingFields.push('parking session');
+        if (!RegisteredCarID) missingFields.push('registered car ID');
         if (missingFields.length > 0) {
             return NextResponse.json(
                 { error: `Missing required fields: ${missingFields.join(', ')}` },
@@ -29,18 +27,34 @@ export async function POST(request: NextRequest) {
 
         const supabase = await createBrowserSupabaseClient();
 
+        // check car ownership
+        const { data: carOwnerCheck, error: ownerError } = await supabase
+            .from('RegisteredCar')
+            .select('RegisteredCarID')
+            .eq('RegisteredCarID', RegisteredCarID)
+            .eq('UserID', UserID)
+            .maybeSingle();
+
+        if (!carOwnerCheck || ownerError) {
+            return NextResponse.json({ error: 'Unauthorized: You do not own this vehicle.' }, { status: 403 });
+        }
+
+        // get current time
+        const now = new Date().toISOString();
+        const pgFormat = now.replace('T', ' ');
+        const currentTime = pgFormat.replace('Z', '000+00');
+
+        // update end time
         const { error } = await supabase
-        .from("RegisteredCar")
-        .update({
-            Carplate: Carplate,
-            VehicleMade: VehicleMade,
-            VehicleModel: VehicleModel
-        })
-        .eq("RegisteredCarID", RegisteredCarID)
-        .eq("UserID", UserID);
+            .from("ParkingSession")
+            .update({
+                End: currentTime
+            })
+            .eq("ParkingSessionID", ParkingSessionID)
+            .eq("RegisteredCarID", RegisteredCarID);
 
         if (error) {
-            return NextResponse.json({error: error.message}, {status: 500});
+            return NextResponse.json({ error: error.message }, { status: 500 });
         }
 
         // success
@@ -48,7 +62,7 @@ export async function POST(request: NextRequest) {
             {
                 success: true
             },
-            { status: 201 }
+            { status: 200 }
         );
 
 
