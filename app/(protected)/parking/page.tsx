@@ -158,28 +158,42 @@ const page = () => {
         setIsEndingSession(true);
         // check is parking?
         const activeSession = car.ParkingSession?.[0];
-        if(!activeSession) return;
+        if (!activeSession) return;
 
         // call wallet to process transaction
         // call endsession to insert end
         const id = toast.loading("Processing Payment ...");
 
         // process payment
-        try {
-            const cost = getParkingCost(activeSession.Start);
-            const response = await fetch("/api/wallet", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    amount: cost,
-                    type: "Payment",
-                    for: "Parking",
-                })
-            })
-            const result = await response.json();
+        const cost = getParkingCost(activeSession.Start);
+        if (cost !== 0) {
+            try {
 
-            if (!response.ok && result.error) {
-                console.error("Failed to Pay:", result.error);
+                const response = await fetch("/api/wallet", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        amount: cost,
+                        type: "Payment",
+                        for: "Parking",
+                    })
+                })
+                const result = await response.json();
+
+                if (!response.ok && result.error) {
+                    console.error("Failed to Pay:", result.error);
+                    toast.update(id, {
+                        render: "Failed to Pay",
+                        type: "error",
+                        isLoading: false,
+                        autoClose: 2000,
+                    });
+                    setIsEndingSession(false);
+                    return;
+                }
+
+            } catch (error) {
+                console.error("Failed to Pay:", error);
                 toast.update(id, {
                     render: "Failed to Pay",
                     type: "error",
@@ -189,17 +203,6 @@ const page = () => {
                 setIsEndingSession(false);
                 return;
             }
-
-        } catch (error) {
-            console.error("Failed to Pay:", error);
-            toast.update(id, {
-                render: "Failed to Pay",
-                type: "error",
-                isLoading: false,
-                autoClose: 2000,
-            });
-            setIsEndingSession(false);
-            return;
         }
 
         // end session after process payment

@@ -6,8 +6,13 @@ export function getParkingCost(startTimeString: string) {
     const diffInMilliseconds = Math.max(0, now - startTime);
 
     const hoursPassed = diffInMilliseconds / (1000 * 60 * 60);
+    const minutesPassed = (diffInMilliseconds/(1000*60)) %60
 
     const billedHours = Math.ceil(hoursPassed);
+
+    if (minutesPassed <= 15) {
+        return 0;
+    }
 
     let cost = billedHours * 1;
 
