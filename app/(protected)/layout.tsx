@@ -15,7 +15,15 @@ export default async function ProtectedLayout({
         redirect("/sign-in");
     }
 
-    const user = await currentUser();
+    let user;
+    try {
+        user = await currentUser();
+    } catch (err) {
+        // if Clerk API responds with an error (e.g. bad gateway or no session),
+        // treat as unauthenticated and redirect to sign-in page
+        console.error('Failed to fetch current user', err);
+        redirect('/sign-in');
+    }
     const role = (user?.publicMetadata?.role as string) ?? undefined;
     const isAdmin = role === "admin";
 
