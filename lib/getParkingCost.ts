@@ -10,7 +10,8 @@ export function getParkingCost(startTimeString: string) {
 
     const billedHours = Math.ceil(hoursPassed);
 
-    if (minutesPassed <= 15) {
+
+    if (hoursPassed === 0 && minutesPassed <= 15) {
         return 0;
     }
 

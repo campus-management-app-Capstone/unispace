@@ -2,6 +2,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import Landing from "./landing";
 
 export default async function LandingPage() {
   const user = await currentUser();
@@ -20,6 +21,7 @@ export default async function LandingPage() {
       <Link href="/sign-in">
         <Button>Sign In</Button>
       </Link>
+      <Landing />
     </div>
   );
 }
