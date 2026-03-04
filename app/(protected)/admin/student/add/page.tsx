@@ -82,9 +82,10 @@ export default function AddStudentPage() {
         setLoadingFormData(true);
 
         const response = await fetch('/api/admin/students/data');
-
+        
         const result = await response.json();
         console.log("here");
+
 
         const { courses, intakes } = result;
 
