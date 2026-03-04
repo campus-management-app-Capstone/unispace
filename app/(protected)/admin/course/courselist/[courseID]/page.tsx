@@ -155,18 +155,18 @@ function SemesterSection({
 export default function CourseDetailPage() {
   const params = useParams<{ courseID: string }>();
   const router = useRouter();
-  const courseID = params.courseID;
 
   const [course, setCourse] = useState<CourseDetail | null>(null);
   const [semesters, setSemesters] = useState<SemesterGroup[]>([]);
   const [openSemesters, setOpenSemesters] = useState<Set<number>>(new Set());
-  const [totalEnrolled, setTotalEnrolled] = useState(0);
+  const [totalEnrolled, setTotalEnrolledCount] = useState(0);
   const [intakes, setIntakes] = useState<IntakeGroup[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   /** Fetch course + department + syllabus data on mount / courseID change */
   useEffect(() => {
-    if (!courseID) return;
+    const currentCourseID = params.courseID;
+    if (!currentCourseID) return;
 
     let isCancelled = false;
 
@@ -177,7 +177,7 @@ export default function CourseDetailPage() {
       const { data: courseData, error: courseError } = await supabase
         .from("Course")
         .select("CourseID, Name, Level, TotalSemester, Department(Name)")
-        .eq("CourseID", courseID)
+        .eq("CourseID", currentCourseID)
         .single();
 
       if (isCancelled) return;
@@ -200,7 +200,7 @@ export default function CourseDetailPage() {
       const { data: syllabusData, error: syllabusError } = await supabase
         .from("Syllabus")
         .select("SubjectID, Semester, Subject(SubjectID, Name, Duration)")
-        .eq("CourseID", courseID)
+        .eq("CourseID", currentCourseID)
         .order("Semester");
 
       if (isCancelled) return;
@@ -251,13 +251,13 @@ export default function CourseDetailPage() {
       const { data: enrollmentData } = await supabase
         .from("Enrollment")
         .select("StudentID, Intake")
-        .eq("CourseID", courseID);
+        .eq("CourseID", currentCourseID);
 
       if (isCancelled) return;
 
       const enrollments = enrollmentData ?? [];
       const uniqueStudents = new Set(enrollments.map((e) => e.StudentID));
-      setTotalEnrolled(uniqueStudents.size);
+      setTotalEnrolledCount(uniqueStudents.size);
 
       // Group by intake and count distinct students per intake
       const intakeMap = new Map<string, Set<string>>();
@@ -283,7 +283,7 @@ export default function CourseDetailPage() {
     return () => {
       isCancelled = true;
     };
-  }, [courseID]);
+  }, [params.courseID]);
 
   const toggleSemester = useCallback((semester: number) => {
     setOpenSemesters((prev) => {
