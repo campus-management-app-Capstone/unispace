@@ -12,7 +12,7 @@ export async function GET() {
   try {
 
     // Create Supabase client
-    const supabase = createBrowserSupabaseClient();
+    const supabase = createBrowserSupabaseClient(); 
 
     // Fetch courses
     const { data: coursesData, error: coursesError } = await supabase
@@ -36,9 +36,7 @@ export async function GET() {
       throw enrollmentsError;
     }
 
-    const intakes = Array.from(
-      new Set((enrollmentsData || []).map((e: any) => e.Intake).filter(Boolean))
-    );
+    const intakes = Array.from(new Set(enrollmentsData?.map(e => e.Intake) || [])).sort().reverse();
 
     // Return JSON
     return NextResponse.json({

@@ -19,7 +19,9 @@ import {
   School,
   Menu,
   ChevronDown,
-  UsersRound 
+  Blocks,
+  UsersRound,
+  Calendar
 } from "lucide-react";
 import {
   NavigationMenu,
@@ -66,6 +68,11 @@ const courseSubItems = [
     href: "/admin/course/class", 
     icon: School, 
   },
+  { 
+    label: "Class Registration", 
+    href: "/admin/course/classregistration", 
+    icon: Blocks, 
+  },
 ] as const;
 
 /** Top-level admin navigation items (direct links without sub-menus) */
@@ -79,6 +86,11 @@ const adminNavItems = [
     label: "Lecturer", 
     href: "/admin/lecturer", 
     icon: GraduationCap, 
+  },
+  { 
+    label: "Timetable", 
+    href: "/admin/timetable", 
+    icon: Calendar, 
   },
   { 
     label: "Facility", 

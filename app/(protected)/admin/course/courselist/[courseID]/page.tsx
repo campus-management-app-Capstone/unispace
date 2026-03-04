@@ -153,7 +153,7 @@ function SemesterSection({
  * CourseDetailPage — displays full course info with collapsible semesters
  * ───────────────────────────────────────────────────────────────────────────── */
 export default function CourseDetailPage() {
-  const params = useParams<{ courseID: string }>();
+  const { courseID } = useParams<{ courseID: string }>();
   const router = useRouter();
 
   const [course, setCourse] = useState<CourseDetail | null>(null);
@@ -165,8 +165,7 @@ export default function CourseDetailPage() {
 
   /** Fetch course + department + syllabus data on mount / courseID change */
   useEffect(() => {
-    const currentCourseID = params.courseID;
-    if (!currentCourseID) return;
+    if (!courseID) return;
 
     let isCancelled = false;
 
@@ -177,7 +176,7 @@ export default function CourseDetailPage() {
       const { data: courseData, error: courseError } = await supabase
         .from("Course")
         .select("CourseID, Name, Level, TotalSemester, Department(Name)")
-        .eq("CourseID", currentCourseID)
+        .eq("CourseID", courseID)
         .single();
 
       if (isCancelled) return;
@@ -200,7 +199,7 @@ export default function CourseDetailPage() {
       const { data: syllabusData, error: syllabusError } = await supabase
         .from("Syllabus")
         .select("SubjectID, Semester, Subject(SubjectID, Name, Duration)")
-        .eq("CourseID", currentCourseID)
+        .eq("CourseID", courseID)
         .order("Semester");
 
       if (isCancelled) return;
@@ -251,7 +250,7 @@ export default function CourseDetailPage() {
       const { data: enrollmentData } = await supabase
         .from("Enrollment")
         .select("StudentID, Intake")
-        .eq("CourseID", currentCourseID);
+        .eq("CourseID", courseID);
 
       if (isCancelled) return;
 
@@ -283,7 +282,7 @@ export default function CourseDetailPage() {
     return () => {
       isCancelled = true;
     };
-  }, [params.courseID]);
+  }, [courseID]);
 
   const toggleSemester = useCallback((semester: number) => {
     setOpenSemesters((prev) => {
