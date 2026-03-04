@@ -37,9 +37,10 @@ export default function StudentManagementPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/admin/students');
-      
-      if (!response.ok) throw new Error('Failed to fetch');
+      const response = await fetch('/api/admin/students/data');
+      if (!response.ok) {
+        throw new Error('Failed to fetch student data');
+      }
       
       const { students: studentsData, enrollments: enrollmentsData } = await response.json();
 
@@ -99,9 +100,6 @@ export default function StudentManagementPage() {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Breadcrumb */}
-      <AdminBreadcrumb />
-
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

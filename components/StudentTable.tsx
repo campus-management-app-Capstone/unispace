@@ -33,6 +33,7 @@ import { toast } from 'react-toastify';
 
 type Student = {
   StudentID: string;
+  StudentCode: string;
   UserID: string;
 };
 
@@ -67,7 +68,7 @@ export default function StudentTable({
 
       if (!response.ok) throw new Error('Failed to delete');
 
-      toast.success(`Student ${studentToDelete.StudentID} deleted successfully`);
+      toast.success(`Student ${studentToDelete.StudentCode} deleted successfully`);
       setDeleteDialogOpen(false);
       setStudentToDelete(null);
       onDataChange();
@@ -86,7 +87,7 @@ export default function StudentTable({
         <Table>
           <TableHeader>
             <TableRow className="border-b bg-gray-50">
-              <TableHead className="py-4">Student ID</TableHead>
+              <TableHead className="py-4">Student Code</TableHead>
               <TableHead>User ID</TableHead>
               <TableHead>Intake</TableHead>
               <TableHead className="text-right w-24">Actions</TableHead>
@@ -102,7 +103,7 @@ export default function StudentTable({
             ) : (
               students.map(student => (
                 <TableRow key={student.StudentID} className="hover:bg-gray-50 transition-colors">
-                  <TableCell className="font-medium font-mono text-sm">{student.StudentID}</TableCell>
+                  <TableCell className="font-medium font-mono text-sm">{student.StudentCode}</TableCell>
                   <TableCell className="text-sm text-gray-600 font-mono">{student.UserID}</TableCell>
                   <TableCell className="text-sm">
                     <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-800">
@@ -148,7 +149,7 @@ export default function StudentTable({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Student</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete student <strong>{studentToDelete?.StudentID}</strong>? 
+              Are you sure you want to delete student <strong>{studentToDelete?.StudentCode}</strong>? 
               This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>

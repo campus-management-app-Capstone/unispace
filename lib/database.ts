@@ -491,20 +491,6 @@ export async function getEnrollmentsByStudentId(studentId: string) {
 }
 
 /**
- * Get all enrollments
- */
-export async function getAllEnrollments() {
-  const supabase = await createClerkSupabaseClient();
-  const { data, error } = await supabase
-    .from('Enrollment')
-    .select('*')
-    .order('Intake', { ascending: false });
-
-  if (error) throw error;
-  return data;
-}
-
-/**
  * Create a new enrollment
  */
 export async function createEnrollment(enrollmentData: TablesInsert<'Enrollment'>) {
@@ -530,4 +516,65 @@ export async function deleteEnrollment(enrollmentId: string) {
     .eq('EnrollmentID', enrollmentId);
 
   if (error) throw error;
+}
+
+// ============================================================================
+// COURSE OPERATIONS
+// ============================================================================
+
+/**
+ * Get all courses with their details (CourseID, Name, Level)
+ */
+export async function getAllCourses() {
+  const supabase = await createClerkSupabaseClient();
+  const { data, error } = await supabase
+    .from('Course')
+    .select('CourseID, Name, Level')
+    .order('CourseID', { ascending: true });
+
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Get all distinct intakes from Enrollment table
+ */
+export async function getAllIntakes() {
+  const supabase = await createClerkSupabaseClient();
+  const { data, error } = await supabase
+    .from('Enrollment')
+    .select('Intake')
+    .order('Intake', { ascending: false });
+
+  if (error) throw error;
+  
+  // Get unique intakes
+  const uniqueIntakes = Array.from(
+    new Set((data || []).map(e => e.Intake).filter(Boolean))
+  );
+  
+  return uniqueIntakes;
+}
+
+/**
+ * Get student with course and enrollment details
+ */
+export async function getStudentWithDetails(studentId: string) {
+  const supabase = await createClerkSupabaseClient();
+  const { data, error } = await supabase
+    .from('Student')
+    .select(`
+      *,
+      Enrollment (
+        EnrollmentID,
+        CourseID,
+        Intake,
+        Balance
+      )
+    `)
+    .eq('StudentID', studentId)
+    .single();
+
+  if (error) throw error;
+  return data;
 }
