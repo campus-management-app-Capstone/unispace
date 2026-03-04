@@ -2,7 +2,7 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from 'next/server';
 
 // check admin route
-const isAdminRoute = createRouteMatcher(['/admin(.*)']);
+const isAdminRoute = createRouteMatcher(['/admin(.*)', '/api(.*)']);
 
 // Make sure '/sign-in(.*)' is here!
 const isPublicRoute = createRouteMatcher([
@@ -20,14 +20,14 @@ export default clerkMiddleware(async (auth, req) => {
   const { sessionClaims } = await auth();
   const userRole = sessionClaims?.metadata?.role;
 
-  // check student and lecturer only, not admin
+  // check is admin
   if (!isAdminRoute(req) && userRole === 'admin' && !isPublicRoute(req)) {
     // is a admin, not allow to access other than admin page
     const redirectUrl = new URL('/admin', req.url); // redirect to admin page
     return NextResponse.redirect(redirectUrl);
   }
 
-  // check admin only for admin route
+  // check not admin
   if (isAdminRoute(req) && userRole !== 'admin' && !isPublicRoute(req)) {
     //not admin
     const redirectUrl = new URL('/home', req.url); // redirect to home page
