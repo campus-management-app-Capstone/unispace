@@ -3,16 +3,16 @@ import { auth } from '@clerk/nextjs/server';
 import { createBrowserSupabaseClient } from '@/lib/supabase-browser';
 
 export async function GET() {
-    const { sessionClaims } = await auth();
-    const UserID = sessionClaims?.sub;
-    if (!UserID) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  const { sessionClaims } = await auth();
+  const UserID = sessionClaims?.sub;
+  if (!UserID) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
   try {
 
     // Create Supabase client
-    const supabase = createBrowserSupabaseClient();
+    const supabase = createBrowserSupabaseClient(); 
 
     // Fetch courses
     const { data: coursesData, error: coursesError } = await supabase
@@ -36,19 +36,18 @@ export async function GET() {
       throw enrollmentsError;
     }
 
-    const intakes = Array.from(
-      new Set((enrollmentsData || []).map((e: any) => e.Intake).filter(Boolean))
-    );
+    const intakes = Array.from(new Set(enrollmentsData?.map(e => e.Intake) || [])).sort().reverse();
 
     // Return JSON
     return NextResponse.json({
       courses: coursesData || [],
       intakes: intakes || [],
-    });
-  } catch (error) {
-    console.error('Failed to fetch form data:', error);
+    },
+      { status: 200 });
+  } catch (err) {
+    console.error('Failed to fetch form data:', err);
     return NextResponse.json(
-      { error: (error as Error).message || 'Failed to fetch form data' },
+      { error: err.message || 'Failed to fetch form data' },
       { status: 500 }
     );
   }
