@@ -21,7 +21,30 @@ CardHeader,
 CardTitle,
 } from '@/components/ui/card';
 import { toast } from 'react-toastify';
-import { email } from 'zod';
+
+function formatIntake(intake: string) {
+  if (!intake) return "";
+
+  const year = intake.slice(0, 4);
+  const month = intake.slice(4, 6);
+
+  const months: Record<string, string> = {
+    "01": "Jan",
+    "02": "Feb",
+    "03": "Mar",
+    "04": "Apr",
+    "05": "May",
+    "06": "Jun",
+    "07": "Jul",
+    "08": "Aug",
+    "09": "Sep",
+    "10": "Oct",
+    "11": "Nov",
+    "12": "Dec",
+  };
+
+  return `${months[month] ?? month} ${year}`;
+}
 
 type Course = {
 CourseID: string;
@@ -149,29 +172,38 @@ toast.error('Course is required');
 return;
 }
 
-if (!formData.intakeMonth || !formData.intakeYear) {
-toast.error('Intake is required');
-return;
+if (formData.isNewIntake) {
+  if (!formData.intakeMonth || !formData.intakeYear) {
+    toast.error('Please select intake month and year');
+    return;
+  }
+} else {
+  if (!formData.intakeYear) {
+    toast.error('Please select an existing intake');
+    return;
+  }
 }
 
 try {
-setLoading(true);
+  setLoading(true);
 
-const intake = `${formData.intakeMonth}${formData.intakeYear}`;
+  const intake = formData.isNewIntake
+  ? `${formData.intakeYear}${formData.intakeMonth}`
+  : formData.intakeYear;
 
-const response = await fetch('/api/admin/students/create', {
-method: 'POST',
-headers: {
-'Content-Type': 'application/json',
-},
-body: JSON.stringify({
-name: formData.name,
-email : formData.email,
-password: formData.tempPassword,
-courseId: formData.courseId,
-intake,
-}),
-});
+  const response = await fetch('/api/admin/students/create', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      name: formData.name,
+      email: formData.email,
+      password: formData.tempPassword,
+      courseId: formData.courseId,
+      intake,
+    }),
+  });
 
 const result = await response.json();
 
@@ -370,7 +402,7 @@ handleSelectChange('intakeYear', value)
 {intakes.map(intake => (
 
 <SelectItem key={intake} value={intake}>
-{intake}
+{formatIntake(intake)}
 </SelectItem>
 
 ))}

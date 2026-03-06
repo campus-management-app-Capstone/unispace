@@ -1,8 +1,6 @@
 import { NextResponse, NextRequest } from "next/server";
 import { clerkClient } from "@clerk/nextjs/server";
 import { createBrowserSupabaseClient } from "@/lib/supabase-browser";
-import { e } from "@/data/map";
-import { en } from "zod/v4/locales";
 
 export async function POST(req: NextRequest) {
   try {
