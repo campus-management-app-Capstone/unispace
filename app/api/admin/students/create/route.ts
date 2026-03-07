@@ -7,19 +7,15 @@ export async function POST(req: NextRequest) {
 
     const { name, password, email, courseId, intake } = await req.json();
 
-    /**
-     * Create Supabase Client
-     */
+
+    // Create Supabase Client
     const supabase = await createBrowserSupabaseClient();
 
-    /**
-     * Clerk Client
-     */
+
+    // Clerk Client
     const clerk = await clerkClient();
 
-    /**
-     * 1️⃣ Create Clerk User
-     */
+    // Create Clerk User
     try {
       const clerkUser = await clerk.users.createUser({
         firstName: name,
@@ -32,9 +28,8 @@ export async function POST(req: NextRequest) {
 
     const userId = clerkUser.id;
 
-    /**
-     * 2️⃣ Insert Student in Supabase
-     */
+      // Insert Student in Supabase
+
       try {
         const { error: userError } = await supabase
           .from("User")
@@ -56,9 +51,8 @@ export async function POST(req: NextRequest) {
         const studentId = student.StudentID;
         const studentCode = student.StudentCode;
 
-        /**
-         * 3️⃣ Create Wallet
-         */
+        // Create Wallet
+        
         const { error: walletError } = await supabase
           .from("Wallet")
           .insert({
@@ -68,9 +62,8 @@ export async function POST(req: NextRequest) {
 
         if (walletError) throw new Error(walletError.message);
 
-        /**
-         * 4️⃣ Create Enrollment
-         */
+        // Create Enrollment
+
         const { data: enrollment, error: enrollError } = await supabase
           .from("Enrollment")
           .insert({

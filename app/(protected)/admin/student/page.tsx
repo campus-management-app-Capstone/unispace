@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo, useCallback } from "react";
 import Link from "next/link";
-import { Plus, Search, ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react";
+import { Plus, Search, ChevronLeft, ChevronRight, SlidersHorizontal, Pencil, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -235,6 +235,42 @@ export default function StudentManagementPage() {
     setCurrentPage(1);
   };
 
+  const handleDeleteStudent = async (
+  studentId: string,
+  studentCode: string
+) => {
+
+  const confirmed = confirm(
+    `Delete student ${studentCode}?\nThis action cannot be undone.`
+  );
+
+  if (!confirmed) return;
+
+  try {
+
+    const res = await fetch(`/api/admin/students/delete/${studentId}`, {
+        method: "DELETE",
+      });
+
+    const result = await res.json();
+
+    if (!res.ok) throw new Error(result.error);
+
+    toast.success(`Student ${studentCode} deleted`);
+
+    fetchData(); // refresh table
+
+  } catch (err) {
+
+    console.error(err);
+    toast.error(
+      err instanceof Error ? err.message : "Failed to delete student"
+    );
+
+  }
+
+};
+
   return (
     <div className="mx-auto w-full space-y-6">
 
@@ -464,6 +500,7 @@ export default function StudentManagementPage() {
               <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">Course Name</TableHead>
               <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">Level</TableHead>
               <TableHead className="text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">Intake</TableHead>
+              <TableHead className="text-center w-[120px]">Actions</TableHead>
 
             </TableRow>
 
@@ -538,6 +575,33 @@ export default function StudentManagementPage() {
 
                   <TableCell className="text-center">
                     {formatIntake(s.Intake)}
+                  </TableCell>
+
+                  <TableCell className="text-center">
+                    <div className="flex items-center justify-center gap-2">
+
+                      {/* Edit */}
+                      <Link href={`/admin/student/edit/${s.StudentID}`}>
+                        <Button
+                          variant="outline"
+                          size="icon-sm"
+                          className="hover:bg-blue-50"
+                        >
+                          <Pencil className="size-4 text-blue-600" />
+                        </Button>
+                      </Link>
+
+                      {/* Delete */}
+                      <Button
+                        variant="outline"
+                        size="icon-sm"
+                        onClick={() => handleDeleteStudent(s.StudentID, s.StudentCode)}
+                        className="hover:bg-red-50"
+                      >
+                        <Trash2 className="size-4 text-red-600" />
+                      </Button>
+
+                    </div>
                   </TableCell>
 
                 </TableRow>
