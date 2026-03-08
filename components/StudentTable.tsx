@@ -119,7 +119,7 @@ export default function StudentTable({
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <Link href={`/admin/student/${student.StudentID}/edit`}>
+                        <Link href={`/admin/student/edit/${student.StudentID}`}>
                           <DropdownMenuItem>
                             <Edit2 className="mr-2 h-4 w-4" />
                             Edit
