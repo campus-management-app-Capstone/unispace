@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home } from "lucide-react";
@@ -43,14 +44,60 @@ function resolveLabel(segment: string): string {
  */
 export default function AdminBreadcrumb() {
   const pathname = usePathname();
+  const [dynamicLastLabel, setDynamicLastLabel] = useState<string | null>(null);
 
-  const segments = pathname
-    .split("/")
-    .filter(Boolean)
-    .filter((seg) => seg !== "(protected)");
+  const segments = useMemo(
+    () =>
+      pathname
+        .split("/")
+        .filter(Boolean)
+        .filter((seg) => seg !== "(protected)"),
+    [pathname]
+  );
+
+  useEffect(() => {
+    const loadDynamicCode = async () => {
+      setDynamicLastLabel(null);
+
+      const section = segments[1];
+      const action = segments[2];
+      const entityId = segments[3];
+
+      if (action !== "edit" || !entityId) {
+        return;
+      }
+
+      try {
+        if (section === "student") {
+          const response = await fetch(`/api/admin/students/${entityId}`);
+          const data = await response.json();
+
+          if (response.ok && data?.student?.StudentCode) {
+            setDynamicLastLabel(data.student.StudentCode);
+          }
+        }
+
+        if (section === "lecturer") {
+          const response = await fetch(`/api/admin/lecturers/${entityId}`);
+          const data = await response.json();
+
+          if (response.ok && data?.lecturer?.LecturerCode) {
+            setDynamicLastLabel(data.lecturer.LecturerCode);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to resolve breadcrumb code", error);
+      }
+    };
+
+    loadDynamicCode();
+  }, [segments]);
 
   const crumbs = segments.map((segment, index) => ({
-    label: resolveLabel(segment),
+    label:
+      index === segments.length - 1 && dynamicLastLabel
+        ? dynamicLastLabel
+        : resolveLabel(segment),
     href: "/" + segments.slice(0, index + 1).join("/"),
   }));
 

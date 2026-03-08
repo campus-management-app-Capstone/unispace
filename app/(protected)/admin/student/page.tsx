@@ -286,7 +286,7 @@ export default function StudentManagementPage() {
         </div>
 
         <Link href="/admin/student/add">
-          <Button className="gap-2">
+          <Button className="gap-2 transition-colors hover:bg-primary/90">
             <Plus className="size-4" />
             Add Student
           </Button>
@@ -474,7 +474,7 @@ export default function StudentManagementPage() {
           <Button
             variant="outline"
             onClick={clearFilters}
-            className="gap-2"
+            className="gap-2 transition-colors hover:bg-accent"
           >
             <SlidersHorizontal className="size-4" />
             Clear
@@ -585,7 +585,7 @@ export default function StudentManagementPage() {
                         <Button
                           variant="outline"
                           size="icon-sm"
-                          className="hover:bg-blue-50"
+                          className="transition-colors hover:bg-blue-50"
                         >
                           <Pencil className="size-4 text-blue-600" />
                         </Button>
@@ -596,7 +596,7 @@ export default function StudentManagementPage() {
                         variant="outline"
                         size="icon-sm"
                         onClick={() => handleDeleteStudent(s.StudentID, s.StudentCode)}
-                        className="hover:bg-red-50"
+                        className="transition-colors hover:bg-red-50"
                       >
                         <Trash2 className="size-4 text-red-600" />
                       </Button>

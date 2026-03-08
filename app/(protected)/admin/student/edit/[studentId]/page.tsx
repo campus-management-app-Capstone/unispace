@@ -310,11 +310,21 @@ export default function EditStudentPage() {
               </div>
 
               <div className="flex gap-3 pt-4">
-                <Button type="submit" disabled={saving}>
+                <Button
+                  type="submit"
+                  disabled={saving}
+                  className="transition-colors hover:bg-primary/90"
+                >
                   {saving ? 'Updating Student...' : 'Save Changes'}
                 </Button>
 
-                <Button type="button" variant="outline" onClick={() => router.back()} disabled={saving}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => router.back()}
+                  disabled={saving}
+                  className="transition-colors hover:bg-accent"
+                >
                   Cancel
                 </Button>
               </div>

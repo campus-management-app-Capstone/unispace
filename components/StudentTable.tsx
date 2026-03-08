@@ -113,7 +113,11 @@ export default function StudentTable({
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 transition-colors hover:bg-gray-100"
+                        >
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -162,7 +166,7 @@ export default function StudentTable({
             <AlertDialogAction
               onClick={handleDeleteConfirm}
               disabled={isDeleting}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-red-600 transition-colors hover:bg-red-700"
             >
               {isDeleting ? 'Deleting...' : 'Delete'}
             </AlertDialogAction>

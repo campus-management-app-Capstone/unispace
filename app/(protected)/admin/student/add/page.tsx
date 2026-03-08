@@ -320,6 +320,7 @@ onChange={handleInputChange}
 type="button"
 variant="outline"
 onClick={generateTempPassword}
+className="transition-colors hover:bg-accent"
 >
 Generate
 </Button>
@@ -512,7 +513,11 @@ EnrollmentID (UUID)
 
 <div className="flex gap-3 pt-4">
 
-<Button type="submit" disabled={loading}>
+<Button
+type="submit"
+disabled={loading}
+className="transition-colors hover:bg-primary/90"
+>
 
 {loading
 ? 'Creating Student...'
@@ -525,6 +530,7 @@ type="button"
 variant="outline"
 onClick={() => router.back()}
 disabled={loading}
+className="transition-colors hover:bg-accent"
 >
 
 Cancel
