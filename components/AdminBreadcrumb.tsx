@@ -85,6 +85,15 @@ export default function AdminBreadcrumb() {
             setDynamicLastLabel(data.lecturer.LecturerCode);
           }
         }
+
+        if (section === "adminmanagement") {
+          const response = await fetch(`/api/admin/admins/${entityId}`);
+          const data = await response.json();
+
+          if (response.ok && data?.admin?.AdminCode) {
+            setDynamicLastLabel(data.admin.AdminCode);
+          }
+        }
       } catch (error) {
         console.error("Failed to resolve breadcrumb code", error);
       }

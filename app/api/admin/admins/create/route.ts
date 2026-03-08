@@ -4,9 +4,9 @@ import { createBrowserSupabaseClient } from "@/lib/supabase-browser";
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, password, email, departmentId } = await req.json();
+    const { name, password, email } = await req.json();
 
-    if (!name?.trim() || !password?.trim() || !email?.trim() || !departmentId) {
+    if (!name?.trim() || !password?.trim() || !email?.trim()) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
       password,
       emailAddress: [email],
       publicMetadata: {
-        role: "lecturer",
+        role: "admin",
       },
     });
 
@@ -38,36 +38,34 @@ export async function POST(req: NextRequest) {
 
       if (walletError) throw new Error(walletError.message);
 
-      const { data: lecturer, error: lecturerError } = await supabase
-        .from("Lecturer")
+      const { data: admin, error: adminError } = await supabase
+        .from("Admin")
         .insert({
           UserID: userId,
-          DepartmentID: departmentId,
         })
-        .select("LecturerID, LecturerCode, EmployedTime")
+        .select("AdminID, AdminCode")
         .single();
 
-      if (lecturerError) throw new Error(lecturerError.message);
+      if (adminError) throw new Error(adminError.message);
 
       return NextResponse.json(
         {
           success: true,
           email,
-          lecturerId: lecturer.LecturerID,
-          lecturerCode: lecturer.LecturerCode,
-          employedTime: lecturer.EmployedTime,
+          adminId: admin.AdminID,
+          adminCode: admin.AdminCode,
         },
         { status: 201 }
       );
     } catch (error) {
-      await supabase.from("Lecturer").delete().eq("UserID", userId);
+      await supabase.from("Admin").delete().eq("UserID", userId);
       await supabase.from("Wallet").delete().eq("UserID", userId);
       await supabase.from("User").delete().eq("UserID", userId);
       await clerk.users.deleteUser(userId);
       throw error;
     }
   } catch (err) {
-    console.error("Error in POST /api/admin/lecturers/create:", err);
+    console.error("Error in POST /api/admin/admins/create:", err);
     const message = err instanceof Error ? err.message : "Internal server error";
     return NextResponse.json({ error: message }, { status: 500 });
   }
