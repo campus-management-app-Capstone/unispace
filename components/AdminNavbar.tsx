@@ -21,7 +21,8 @@ import {
   ChevronDown,
   Blocks,
   UsersRound,
-  Calendar
+  Calendar,
+  ChartBar
 } from "lucide-react";
 import {
   NavigationMenu,
@@ -111,6 +112,11 @@ const adminNavItems = [
     label: "Admin", 
     href: "/admin/adminmanagement", 
     icon: UsersRound, 
+  },
+  { 
+    label: "Analytics", 
+    href: "/admin/analytics", 
+    icon: ChartBar, 
   },
 ] as const;
 
