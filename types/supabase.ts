@@ -342,19 +342,19 @@ export type Database = {
       }
       Facility: {
         Row: {
-          Capacity: number
+          Capacity: number | null
           FacilityID: string
           Name: string
           Type: string
         }
         Insert: {
-          Capacity: number
+          Capacity?: number | null
           FacilityID: string
           Name: string
           Type: string
         }
         Update: {
-          Capacity?: number
+          Capacity?: number | null
           FacilityID?: string
           Name?: string
           Type?: string
