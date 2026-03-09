@@ -29,14 +29,16 @@ export async function POST(req: NextRequest) {
 
     const supabase = createServerSupabaseClient();
 
+    const insertPayload = {
+      FacilityID: randomUUID(),
+      Name: String(name).trim(),
+      Type: String(type).trim(),
+      ...(normalizedCapacity !== null ? { Capacity: normalizedCapacity } : {}),
+    };
+
     const { data: facility, error } = await supabase
       .from("Facility")
-      .insert({
-        FacilityID: randomUUID(),
-        Name: String(name).trim(),
-        Type: String(type).trim(),
-        Capacity: normalizedCapacity,
-      })
+      .insert(insertPayload)
       .select("FacilityID, Name, Type, Capacity")
       .single();
 

@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -29,6 +30,20 @@ type Facility = {
   Type: string;
   Capacity: number | null;
 };
+
+const typeColorMap: Record<string, string> = {
+  lab: "bg-sky-100 text-sky-700 border-0",
+  classroom: "bg-amber-100 text-amber-700 border-0",
+  facility: "bg-emerald-100 text-emerald-700 border-0",
+};
+
+function getTypeBadgeColor(type?: string | null) {
+  if (!type) {
+    return "bg-gray-100 text-gray-600 border-0";
+  }
+
+  return typeColorMap[type.toLowerCase()] ?? "bg-slate-100 text-slate-700 border-0";
+}
 
 export default function FacilityManagementPage() {
   const [facilities, setFacilities] = useState<Facility[]>([]);
@@ -251,7 +266,9 @@ export default function FacilityManagementPage() {
               filteredFacilities.map((facility) => (
                 <TableRow key={facility.FacilityID} className="hover:bg-muted/50 transition-colors">
                   <TableCell className="text-center font-medium">{facility.Name}</TableCell>
-                  <TableCell className="text-center">{facility.Type}</TableCell>
+                  <TableCell className="text-center">
+                    <Badge className={getTypeBadgeColor(facility.Type)}>{facility.Type}</Badge>
+                  </TableCell>
                   <TableCell className="text-center">
                     {facility.Capacity === null ? "-" : facility.Capacity}
                   </TableCell>
