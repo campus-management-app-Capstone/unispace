@@ -85,7 +85,7 @@ const VehiclePopup = ({ onVehicleAdded }) => {
     return (
         <div className="w-full h-full">
             <button
-                className="w-full group border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl flex flex-col items-center justify-center p-8 transition-all hover:border-primary hover:bg-primary/5 h-full cursor-pointer shadow-sm hover:shadow-md transition-shadow relative overflow-hidden"
+                className="w-full group border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl flex flex-col items-center justify-center p-8 h-full cursor-pointer shadow-sm hover:shadow-md relative overflow-hidden transition-all transition-shadow bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm hover:border-primary hover:bg-primary/5"
                 onClick={() => setIsAdding(true)}
             >
                 <div className="size-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-white transition-colors">
