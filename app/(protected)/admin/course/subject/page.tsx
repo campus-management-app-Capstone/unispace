@@ -49,12 +49,20 @@ interface SubjectWithCourse {
   CourseName: string;
   Duration: number;
   Semester: number;
+  LecturerCodes: string[];
 }
 
 interface Course {
   CourseID: string;
   Name: string;
   TotalSemester: number;
+}
+
+/** Shape of a lecturer option usable when assigning lecturers to a subject */
+interface LecturerForSubject {
+  LecturerID: string;
+  LecturerCode: string;
+  Name: string;
 }
 
 const ITEMS_PER_PAGE = 7;
@@ -67,6 +75,7 @@ const ITEMS_PER_PAGE = 7;
 export default function SubjectPage() {
   const [subjects, setSubjects] = useState<SubjectWithCourse[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
+  const [lecturers, setLecturers] = useState<LecturerForSubject[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -82,7 +91,7 @@ export default function SubjectPage() {
     setIsLoading(true);
     const supabase = createBrowserSupabaseClient();
 
-    const [syllabusRes, courseRes] = await Promise.all([
+    const [syllabusRes, courseRes, lecturerTeachRes] = await Promise.all([
       supabase
         .from("Syllabus")
         .select("SyllabusID, SubjectID, CourseID, Semester, Subject(Name, Duration)")
@@ -91,10 +100,51 @@ export default function SubjectPage() {
         .from("Course")
         .select("CourseID, Name, TotalSemester")
         .order("Name"),
+      supabase
+        .from("LecturerTeach")
+        .select("SubjectID, Lecturer(LecturerCode)"),
     ]);
+
+    // Fetch lecturers via the existing admin API so that Clerk names are resolved on the server.
+    try {
+      const lecturerResponse = await fetch("/api/admin/lecturers/list");
+      if (lecturerResponse.ok) {
+        const lecturerPayload = await lecturerResponse.json();
+        const lecturerOptions: LecturerForSubject[] = (lecturerPayload.lecturers ?? []).map(
+          (lecturer: {
+            LecturerID: string;
+            LecturerCode: string;
+            Name: string;
+          }) => ({
+            LecturerID: lecturer.LecturerID,
+            LecturerCode: lecturer.LecturerCode,
+            Name: lecturer.Name,
+          })
+        );
+        setLecturers(lecturerOptions);
+      }
+    } catch (err) {
+      console.error("Failed to fetch lecturers for subject assignment:", err);
+    }
 
     const courseMap = new Map<string, string>();
     (courseRes.data ?? []).forEach((c) => courseMap.set(c.CourseID, c.Name));
+
+    const lecturerMap = new Map<string, string[]>();
+    type LecturerTeachRow = {
+      SubjectID: string | null;
+      Lecturer: { LecturerCode: string | null } | null;
+    };
+    (lecturerTeachRes.data ?? []).forEach((row: LecturerTeachRow) => {
+      const subjectId = row.SubjectID ?? undefined;
+      const lecturerCode = row.Lecturer?.LecturerCode ?? undefined;
+      if (!subjectId || !lecturerCode) return;
+
+      const existing = lecturerMap.get(subjectId) ?? [];
+      if (!existing.includes(lecturerCode)) {
+        lecturerMap.set(subjectId, [...existing, lecturerCode]);
+      }
+    });
 
     const seen = new Set<string>();
     const merged: SubjectWithCourse[] = [];
@@ -113,6 +163,7 @@ export default function SubjectPage() {
         Duration: subject?.Duration ?? 0,
         Semester: s.Semester ?? 0,
         CourseName: courseMap.get(s.CourseID ?? "") ?? "Unassigned",
+        LecturerCodes: lecturerMap.get(s.SubjectID) ?? [],
       });
     }
 
@@ -165,6 +216,7 @@ export default function SubjectPage() {
       try {
         const supabase = createBrowserSupabaseClient();
 
+        // Persist subject core details.
         const { error: subjectError } = await supabase
           .from("Subject")
           .upsert(
@@ -173,12 +225,27 @@ export default function SubjectPage() {
           );
         if (subjectError) throw subjectError;
 
+        // Link subject to course and semester in Syllabus.
         const { error: syllabusError } = await supabase.from("Syllabus").insert({
           SubjectID: data.SubjectID,
           CourseID: data.CourseID,
           Semester: data.Semester,
         });
         if (syllabusError) throw syllabusError;
+
+        // Assign selected lecturers to this subject in LecturerTeach (many-to-many).
+        const lecturerTeachRows =
+          data.LecturerIDs?.map((lecturerID) => ({
+            SubjectID: data.SubjectID,
+            LecturerID: lecturerID,
+          })) ?? [];
+
+        if (lecturerTeachRows.length > 0) {
+          const { error: lecturerTeachError } = await supabase
+            .from("LecturerTeach")
+            .insert(lecturerTeachRows);
+          if (lecturerTeachError) throw lecturerTeachError;
+        }
 
         toast.success("Subject created and assigned successfully.");
         setIsDialogOpen(false);
@@ -320,10 +387,13 @@ export default function SubjectPage() {
               <TableHead className="w-[29%] text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Subject Name
               </TableHead>
-              <TableHead className="w-[25%] text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <TableHead className="w-[20%] text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Course Assigned
               </TableHead>
-              <TableHead className="w-[17%] text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <TableHead className="w-[20%] text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Lecturers
+              </TableHead>
+              <TableHead className="w-[15%] text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Duration
               </TableHead>
               <TableHead className="w-[12%] text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -378,6 +448,23 @@ export default function SubjectPage() {
                     >
                         {subject.CourseName}
                       </Badge>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <div className="flex flex-wrap items-center justify-center gap-1">
+                      {subject.LecturerCodes.length === 0 ? (
+                        <span className="text-xs text-muted-foreground">-</span>
+                      ) : (
+                        subject.LecturerCodes.map((code) => (
+                          <Badge
+                            key={code}
+                            variant="outline"
+                            className="border-slate-200 bg-slate-50 text-xs font-medium"
+                          >
+                            {code}
+                          </Badge>
+                        ))
+                      )}
                     </div>
                   </TableCell>
                   <TableCell className="text-center text-muted-foreground">
@@ -468,15 +555,16 @@ export default function SubjectPage() {
 
       {/* Create subject dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create New Subject</DialogTitle>
             <DialogDescription>
-              Fill in the details below to add a new subject to the repository.
+              Fill in the details below to add a new subject to the repository and assign lecturers.
             </DialogDescription>
           </DialogHeader>
           <CreateNewSubjectForm
             courses={courses}
+            lecturers={lecturers}
             onSubmit={handleCreateSubject}
             isSubmitting={isSubmitting}
             onCancel={() => setIsDialogOpen(false)}

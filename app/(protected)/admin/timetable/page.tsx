@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
-import { createServerSupabaseClient } from '@/lib/supabase';
+import { createClerkSupabaseClient } from '@/lib/supabase';
+import { ScheduleTimetableButton } from '@/components/admin/timetable/ScheduleTimetableButton';
 
 /**
  * Shape of a scheduled timetable slot with related class and intake details.
@@ -18,6 +19,19 @@ interface ScheduledTimetableSlot {
   intakes: string[];
   departments: string[];
   semesters: number[];
+}
+
+/**
+ * Shape of a timetable overview group (Course + Semester + Intake).
+ */
+interface TimetableGroup {
+  id: string;
+  courseId: string;
+  courseName: string | null;
+  intake: string;
+  semester: number;
+  departmentNames: string[];
+  slotCount: number;
 }
 
 /**
@@ -118,7 +132,9 @@ function mapScheduledSlots(rows: unknown[]): ScheduledTimetableSlot[] {
 
 /**
  * Transform raw Supabase rows into unscheduled classes without timetable slots.
+ * (Currently not used on this page, but kept for future admin views.)
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function mapUnscheduledClasses(rows: unknown[]): UnscheduledClass[] {
   return (rows || []).map((row) => {
     const typedRow = row as {
@@ -179,20 +195,170 @@ function filterScheduledSlots(
 
 /**
  * Return unscheduled classes (currently independent from intake filters).
+ * (Currently not used on this page, but kept for future admin views.)
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function getUnscheduledClasses(classes: UnscheduledClass[]) {
   return classes;
 }
 
 /**
- * Admin timetable page to manage and view scheduled and unscheduled classes.
+ * Build timetable groups from raw Supabase rows.
+ * This groups scheduled slots into timetables by Course + Semester + Intake.
+ */
+function buildTimetableGroups(
+  rows: unknown[],
+  intakeQuery: string,
+  semesterFilter: number | null,
+  departmentFilter: string
+) {
+  const query = intakeQuery.trim().toLowerCase();
+  const departmentQuery = departmentFilter.trim().toLowerCase();
+
+  const groups = new Map<string, TimetableGroup>();
+
+  (rows || []).forEach((row) => {
+    const typedRow = row as {
+      TimetableSlotID: string;
+      Class?: {
+        Subject?: {
+          Syllabus?: { Semester?: number | null; CourseID?: string | null }[] | null;
+        } | null;
+        ClassRegistration?: {
+          Enrollment?: {
+            Intake?: string | null;
+            Course?: {
+              CourseID?: string | null;
+              Name?: string | null;
+              Department?: { Name?: string | null } | null;
+            } | null;
+          } | null;
+        }[] | null;
+      } | null;
+    };
+
+    const syllabusItems = typedRow.Class?.Subject?.Syllabus ?? [];
+    const semesters = Array.from(
+      new Set(
+        (syllabusItems as { Semester?: number | null }[])
+          .map((item) => item.Semester ?? null)
+          .filter((value): value is number => typeof value === 'number')
+      )
+    );
+
+    const syllabusCourseId =
+      (syllabusItems as { CourseID?: string | null }[])
+        .map((item) => item.CourseID ?? null)
+        .find((value): value is string => Boolean(value)) ?? null;
+
+    const registrations = typedRow.Class?.ClassRegistration ?? [];
+    const hasRegistrations = registrations.length > 0;
+
+    const effectiveSemesters =
+      semesters.length > 0
+        ? semesters
+        : // if no semester from syllabus, we cannot reasonably group
+          [];
+
+    if (!hasRegistrations) {
+      // No enrollment data yet: fall back to syllabus course + "All" intake,
+      // so that admin can still see timetables grouped by course and semester.
+      if (!syllabusCourseId || effectiveSemesters.length === 0) {
+        return;
+      }
+
+      const fallbackIntake = 'All';
+      if (query && !fallbackIntake.toLowerCase().includes(query)) {
+        // intake search does not match the synthetic "All" intake
+        return;
+      }
+
+      effectiveSemesters.forEach((semester) => {
+        if (semesterFilter !== null && semester !== semesterFilter) return;
+
+        const groupId = `${syllabusCourseId}__${semester}__${fallbackIntake}`;
+        const key = groupId.toLowerCase();
+
+        const existing = groups.get(key);
+        if (!existing) {
+          groups.set(key, {
+            id: groupId,
+            courseId: syllabusCourseId,
+            courseName: null,
+            intake: fallbackIntake,
+            semester,
+            departmentNames: [],
+            slotCount: 1,
+          });
+          return;
+        }
+
+        existing.slotCount += 1;
+      });
+      return;
+    }
+
+    registrations.forEach((registration) => {
+      const enrollment = registration.Enrollment ?? null;
+      const intake = enrollment?.Intake ?? null;
+      const course = enrollment?.Course ?? null;
+      const courseId = course?.CourseID ?? syllabusCourseId ?? null;
+      const courseName = course?.Name ?? null;
+      const departmentName = course?.Department?.Name ?? null;
+
+      if (!intake || courseId == null || String(courseId).trim() === '') return;
+
+      if (query && !intake.toLowerCase().includes(query)) return;
+      if (departmentQuery && !(departmentName ?? '').toLowerCase().includes(departmentQuery)) {
+        return;
+      }
+
+      effectiveSemesters.forEach((semester) => {
+        if (semesterFilter !== null && semester !== semesterFilter) return;
+
+        const groupId = `${courseId}__${semester}__${intake}`;
+        const key = groupId.toLowerCase();
+
+        const existing = groups.get(key);
+        if (!existing) {
+          groups.set(key, {
+            id: groupId,
+            courseId,
+            courseName,
+            intake,
+            semester,
+            departmentNames: departmentName ? [departmentName] : [],
+            slotCount: 1,
+          });
+          return;
+        }
+
+        existing.slotCount += 1;
+        if (departmentName && !existing.departmentNames.includes(departmentName)) {
+          existing.departmentNames.push(departmentName);
+        }
+      });
+    });
+  });
+
+  return Array.from(groups.values()).sort((a, b) => {
+    const courseCompare = a.courseId.localeCompare(b.courseId);
+    if (courseCompare !== 0) return courseCompare;
+    const semesterCompare = a.semester - b.semester;
+    if (semesterCompare !== 0) return semesterCompare;
+    return a.intake.localeCompare(b.intake);
+  });
+}
+
+/**
+ * Admin timetable page to manage and view scheduled timetables.
  */
 const TimetablePage = async ({
   searchParams,
 }: {
   searchParams: Promise<TimetableSearchParams>;
 }) => {
-  const supabase = await createServerSupabaseClient();
+  const supabase = await createClerkSupabaseClient();
   const resolvedSearchParams = await searchParams;
 
   const intakeQuery = resolvedSearchParams.q || '';
@@ -217,19 +383,15 @@ const TimetablePage = async ({
     )
   ).sort((a, b) => a - b);
 
-  const defaultSemester =
-    uniqueSemesters.length > 0 ? uniqueSemesters[uniqueSemesters.length - 1] : null;
-
   const semesterFilter =
     typeof resolvedSearchParams.semester === 'string' &&
     resolvedSearchParams.semester.trim() !== ''
       ? Number(resolvedSearchParams.semester)
-      : defaultSemester;
+      : null;
 
   const departmentFilter = resolvedSearchParams.department || '';
 
-  const [{ data: scheduleRows }, { data: unscheduledClassRows }, { data: slotClassRows }] =
-    await Promise.all([
+  const [{ data: scheduleRows }] = await Promise.all([
       supabase
         .from('TimetableSlot')
         .select(
@@ -273,51 +435,20 @@ const TimetablePage = async ({
           )
         `
         )
+        .not('ClassID', 'is', null)
         .order('Day', { ascending: true }),
-      supabase
-        .from('Class')
-        .select(
-          `
-          ClassID,
-          Group,
-          Type,
-          Subject (
-            SubjectID,
-            Name
-          ),
-          Lecturer (
-            LecturerID,
-            LecturerCode
-          )
-        `
-        )
-        .order('ClassID', { ascending: true }),
-      supabase
-        .from('TimetableSlot')
-        .select('ClassID')
-        .not('ClassID', 'is', null),
     ]);
-
-  const classIdsWithSlot = new Set<string>(
-    (slotClassRows || [])
-      .map((row) => row.ClassID as string | null)
-      .filter((id): id is string => Boolean(id))
-  );
-
-  const allUnscheduledClasses = mapUnscheduledClasses(
-    (unscheduledClassRows || []).filter((row) => !classIdsWithSlot.has(row.ClassID))
-  );
 
   const allScheduledSlots = mapScheduledSlots(scheduleRows || []);
 
-  const filteredScheduledSlots = filterScheduledSlots(
-    allScheduledSlots,
+  filterScheduledSlots(allScheduledSlots, intakeQuery, semesterFilter, departmentFilter);
+
+  const timetableGroups = buildTimetableGroups(
+    scheduleRows || [],
     intakeQuery,
     semesterFilter,
     departmentFilter
   );
-
-  const filteredUnscheduledClasses = getUnscheduledClasses(allUnscheduledClasses);
 
   return (
     <div className="mx-auto w-full space-y-6">
@@ -325,17 +456,12 @@ const TimetablePage = async ({
         <div className="space-y-1">
           <h1 className="text-2xl font-bold">Timetable</h1>
           <p className="text-sm text-gray-600">
-            View scheduled timetable slots and remaining unscheduled classes.
+            View scheduled timetable slots grouped by course, semester, and intake.
           </p>
         </div>
 
         <div className="flex w-full justify-end sm:w-auto">
-          <Link
-            href="/admin/timetable/add"
-            className="inline-flex h-9 items-center rounded-md border border-gray-300 bg-white px-4 text-sm font-medium text-gray-800 shadow-sm hover:bg-gray-50"
-          >
-            Schedule
-          </Link>
+          <ScheduleTimetableButton />
         </div>
       </div>
 
@@ -401,100 +527,44 @@ const TimetablePage = async ({
       <div className="space-y-6">
         <section className="space-y-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
           <header className="border-b border-gray-100 pb-2">
-            <h2 className="text-base font-semibold">Unscheduled classes</h2>
-            <p className="text-xs text-gray-500">
-              Classes without any timetable slot. Schedule these to complete the timetable.
-            </p>
-          </header>
-
-          {filteredUnscheduledClasses.length === 0 ? (
-            <p className="py-4 text-sm text-gray-500">All classes are scheduled.</p>
-          ) : (
-            <div className="space-y-2">
-              {filteredUnscheduledClasses.map((item) => (
-                <div
-                  key={item.classId}
-                  className="flex flex-col justify-between gap-2 rounded-md border border-dashed border-gray-200 bg-gray-50 px-3 py-2 text-sm sm:flex-row sm:items-center"
-                >
-                  <div className="space-y-0.5">
-                    <p className="font-medium text-gray-900">
-                      {item.classId} {item.group && <span className="text-gray-700">({item.group})</span>}
-                    </p>
-                    <p className="text-xs text-gray-600">
-                      {item.subjectName || 'No subject linked'} ·{' '}
-                      {item.type || 'Unspecified type'}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3 text-xs text-gray-600">
-                    <span>Lecturer: {item.lecturerCode || '-'}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        <section className="space-y-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-          <header className="border-b border-gray-100 pb-2">
             <h2 className="text-base font-semibold">Scheduled timetable</h2>
             <p className="text-xs text-gray-500">
-              Timetable slots for the selected semester, department, and intake filter.
+              Timetables grouped by course, semester, and intake.
             </p>
           </header>
 
-          {filteredScheduledSlots.length === 0 ? (
+          {timetableGroups.length === 0 ? (
             <p className="py-4 text-sm text-gray-500">
               No timetable slots match the current filters.
             </p>
           ) : (
             <div className="space-y-2">
-              {filteredScheduledSlots.map((slot) => (
+              {timetableGroups.map((group) => (
                 <div
-                  key={slot.id}
+                  key={group.id}
                   className="flex flex-col justify-between gap-2 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm sm:flex-row sm:items-center"
                 >
                   <div className="space-y-0.5">
                     <p className="font-medium text-gray-900">
-                      {slot.subjectName || 'Unassigned subject'}{' '}
-                      {slot.classId && (
-                        <span className="text-gray-700">
-                          ({slot.classId}
-                          {slot.classGroup ? ` · ${slot.classGroup}` : ''})
-                        </span>
-                      )}
+                      {group.courseId}
+                      {group.courseName ? <span className="text-gray-700"> ({group.courseName})</span> : null}
                     </p>
                     <p className="text-xs text-gray-600">
-                      {slot.day || 'Day not set'} ·{' '}
-                      {slot.start && slot.end ? `${slot.start}–${slot.end}` : 'Time not set'} ·{' '}
-                      {slot.facilityName || 'Facility not set'}
+                      Semester {group.semester} · Intake {group.intake} · {group.slotCount} slot
+                      {group.slotCount === 1 ? '' : 's'}
                     </p>
                     <p className="text-xs text-gray-500">
-                      Intakes: {slot.intakes.join(', ') || '—'} · Departments:{' '}
-                      {slot.departments.join(', ') || '—'} · Semesters:{' '}
-                      {slot.semesters.length > 0 ? slot.semesters.join(', ') : '—'}
+                      Departments: {group.departmentNames.join(', ') || '—'}
                     </p>
                   </div>
 
                   <div className="flex items-center gap-3 text-xs">
-                    {slot.intakes.map((intake) => (
-                      <Link
-                        key={intake}
-                        href={{
-                          pathname: `/admin/timetable/${encodeURIComponent(intake)}`,
-                          query: {
-                            semester:
-                              semesterFilter !== null
-                                ? String(semesterFilter)
-                                : slot.semesters[0]
-                                ? String(slot.semesters[0])
-                                : undefined,
-                          },
-                        }}
-                        className="rounded-md border border-gray-200 bg-gray-50 px-2 py-1 font-medium text-gray-800 hover:bg-gray-100"
-                      >
-                        View {intake}
-                      </Link>
-                    ))}
+                    <Link
+                      href={`/admin/timetable/${encodeURIComponent(group.id)}`}
+                      className="rounded-md border border-gray-200 bg-gray-50 px-2 py-1 font-medium text-gray-800 hover:bg-gray-100"
+                    >
+                      View timetable
+                    </Link>
                   </div>
                 </div>
               ))}

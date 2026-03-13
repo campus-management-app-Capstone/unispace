@@ -187,7 +187,6 @@ const ClassPage = async ({ searchParams }: ClassPageProps) => {
                 <th className="py-2 pr-4">Type</th>
                 <th className="py-2 pr-4">Group</th>
                 <th className="py-2 pr-4">Lecturer</th>
-                <th className="py-2 pr-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -211,32 +210,7 @@ const ClassPage = async ({ searchParams }: ClassPageProps) => {
                   <td className="py-2 pr-4 text-gray-800">
                     {item.Lecturer?.LecturerCode || item.LecturerID}
                   </td>
-                  <td className="py-2 pl-4">
-                    <div className="flex justify-end gap-3 text-sm">
-                      <Link
-                        href={`/ (protected)/admin/course/class/${encodeURIComponent(
-                          item.ClassID
-                        )}`.replace(' ', '')}
-                        className="font-medium text-blue-600 hover:underline"
-                      >
-                        Edit
-                      </Link>
-
-                      <form action={deleteClassAction}>
-                        <input
-                          type="hidden"
-                          name="ClassID"
-                          value={item.ClassID}
-                        />
-                        <button
-                          type="submit"
-                          className="font-medium text-red-600 hover:underline"
-                        >
-                          Delete
-                        </button>
-                      </form>
-                    </div>
-                  </td>
+                  
                 </tr>
               ))}
 
