@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 
 export default function WelcomeToast() {
     useEffect(() => {
-        toast('Welcome to unispace!', {
+        toast('Welcome to Unispace!', {
             toastId: 'welcome-toast'
         });
     }, []);

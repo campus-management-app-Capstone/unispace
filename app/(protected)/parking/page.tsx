@@ -293,8 +293,16 @@ const page = () => {
     }
 
     return (
-        <div>
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+        <div className="relative min-h-screen w-full overflow-hidden">
+            <div
+                className="fixed inset-0 z-1 bg-cover bg-center bg-no-repeat"
+                style={{ backgroundImage: "url('/parking.jpg')" }}
+            />
+
+            <div className="fixed inset-0 z-1 bg-white/70 dark:bg-slate-950/70 backdrop-blur-[1px]" />
+
+            <main className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 z-30">
+
                 <section className="mb-10">
                     <div className="bg-gradient-to-br from-primary to-blue-700 rounded-2xl p-8 text-white shadow-xl shadow-primary/20">
                         <div className="flex flex-col md:flex-row items-center justify-between gap-8">
