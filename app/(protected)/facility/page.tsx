@@ -1,7 +1,84 @@
-import { Dumbbell, School, Search } from 'lucide-react'
-import React from 'react'
+"use client"
+
+import FacilityPopUp from '@/components/FacilityPopUp';
+import { Book, BookOpenText, Dumbbell, Landmark, MonitorCog, NotebookPen, School, Search } from 'lucide-react'
+import React, { useEffect, useState } from 'react'
+import { toast } from 'react-toastify';
 
 const page = () => {
+
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSelecting, setIsSelecting] = useState(false);
+    const [selectedFacility, setSelectedFacility] = useState(null);
+
+    const [facility, setFacility] = useState({
+        "classrooms": [],
+        "labs": [],
+        "auditoriums": [],
+        "studyRooms": [],
+        "sports": []
+    });
+
+
+    const fetchFacility = async () => {
+        const id = toast.loading("Loading…");
+
+        try {
+            const response = await fetch("/api/facility/get");
+            const result = await response.json();
+            const data = result.data;
+
+            if (response.ok && result.success) {
+                console.log(JSON.stringify(data));
+
+                setFacility({
+                    classrooms: data.filter(f => f.Type === "Classroom" && !f.Name.startsWith("Auditorium")),
+
+                    labs: data.filter(f => f.Type === "Lab"),
+
+                    auditoriums: data.filter(f => f.Name.startsWith("Auditorium")),
+
+                    studyRooms: data.filter(f => f.Name.startsWith("Study Room")),
+
+                    sports: data.filter(f => f.Type === "Facility" && !f.Name.startsWith("Study Room"))
+                });
+
+                toast.update(id, {
+                    render: "Loading Complete.",
+                    type: "success",
+                    isLoading: false,
+                    autoClose: 2000,
+                });
+            } else {
+                toast.update(id, {
+                    render: (result.error || "Failed to load facility."),
+                    type: "error",
+                    isLoading: false,
+                    autoClose: 2000,
+                });
+            }
+
+
+        } catch (error) {
+            console.error("Fetch crashed:", error);
+            toast.update(id, {
+                render: "Failed to load facility.",
+                type: "error",
+                isLoading: false,
+                autoClose: 2000,
+            });
+        }
+        setIsLoading(false);
+    }
+
+    useEffect(() => {
+        fetchFacility();
+    }, [])
+
+    if (isLoading) {
+        return;
+    }
+
     return (
         <main className="relative min-h-screen w-full overflow-hidden">
             <div
@@ -12,7 +89,7 @@ const page = () => {
             <div className="absolute inset-0 bg-white/70 dark:bg-slate-950/70 backdrop-blur-[1px] z-1"></div>
 
             {/* main */}
-            <div className="relative flex justify-center py-3 px-2 z-10">
+            <div className="relative flex justify-center py-3 px-5 z-10">
                 <div className="layout-content-container flex flex-col max-w-[1280px] w-full flex-1">
                     {/* Hero Section & Search */}
                     <div className="flex flex-col gap-4 sm:gap-6 mb-8 sm:mb-12">
@@ -21,6 +98,7 @@ const page = () => {
                                 Campus Facilities
                             </h1>
                         </div>
+                        {/*
                         <div className="w-full max-w-3xl mt-2 sm:mt-4">
                             <label className="flex flex-col min-w-0 h-12 sm:h-14 w-full group">
                                 <div className="flex w-full flex-1 items-stretch rounded-xl h-full shadow-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 group-focus-within:border-primary transition-all">
@@ -40,6 +118,7 @@ const page = () => {
                                 </div>
                             </label>
                         </div>
+                        */}
                     </div>
 
                     {/* Academic Facilities Section */}
@@ -58,21 +137,20 @@ const page = () => {
                             {/* Classrooms */}
                             <div className="flex flex-col gap-3">
                                 <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-500 px-1">
+                                    <NotebookPen />
                                     Classrooms
                                 </h3>
-                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
-                                    {[
-                                        { name: 'CC-02-02' },
-                                        { name: 'CC-04-05' },
-                                        { name: 'CC-01-10' },
-                                        { name: 'CC-03-12' },
-                                        { name: 'CC-05-01' },
-                                    ].map((room) => (
+                                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 sm:gap-4">
+                                    {facility.classrooms.map((room) => (
                                         <div
-                                            key={room.name}
+                                            key={room.FacilityID}
                                             className="h-20 sm:h-24 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl flex flex-col items-center justify-center gap-1 shadow-sm hover:border-primary transition-colors cursor-pointer"
+                                            onClick={()=>{
+                                                setIsSelecting(true)
+                                                setSelectedFacility(room);
+                                            }}
                                         >
-                                            <span className="text-sm sm:text-lg font-bold text-slate-900 dark:text-slate-100">{room.name}</span>
+                                            <span className="text-sm sm:text-lg font-bold text-slate-900 dark:text-slate-100">{room.Name}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -81,18 +159,19 @@ const page = () => {
                             {/* Labs */}
                             <div className="flex flex-col gap-3">
                                 <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-500 px-1">
-                                    Labs
+                                    <MonitorCog />Labs
                                 </h3>
-                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
-                                    {[
-                                        { name: 'LA-01-05' },
-                                        { name: 'LA-02-02' },
-                                    ].map((room) => (
+                                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 sm:gap-4">
+                                    {facility.labs.map((room) => (
                                         <div
-                                            key={room.name}
+                                            key={room.FacilityID}
                                             className="h-20 sm:h-24 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl flex flex-col items-center justify-center gap-1 shadow-sm hover:border-primary transition-colors cursor-pointer px-2"
+                                            onClick={()=>{
+                                                setIsSelecting(true)
+                                                setSelectedFacility(room);
+                                            }}
                                         >
-                                            <span className="text-sm sm:text-lg font-bold text-slate-900 dark:text-slate-100 text-center leading-tight">{room.name}</span>
+                                            <span className="text-sm sm:text-lg font-bold text-slate-900 dark:text-slate-100 text-center leading-tight">{room.Name}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -100,17 +179,19 @@ const page = () => {
                             {/* Auditorium */}
                             <div className="flex flex-col gap-3">
                                 <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-500 px-1">
-                                    Auditorium
+                                    <Landmark />Auditorium
                                 </h3>
-                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
-                                    {[
-                                        { name: 'Auditorium 1' },
-                                    ].map((room) => (
+                                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 sm:gap-4">
+                                    {facility.auditoriums.map((room) => (
                                         <div
-                                            key={room.name}
+                                            key={room.FacilityID}
                                             className="h-20 sm:h-24 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl flex flex-col items-center justify-center gap-1 shadow-sm hover:border-primary transition-colors cursor-pointer px-2"
+                                            onClick={()=>{
+                                                setIsSelecting(true)
+                                                setSelectedFacility(room);
+                                            }}
                                         >
-                                            <span className="text-sm sm:text-lg font-bold text-slate-900 dark:text-slate-100 text-center leading-tight">{room.name}</span>
+                                            <span className="text-sm sm:text-lg font-bold text-slate-900 dark:text-slate-100 text-center leading-tight">{room.Name}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -119,19 +200,19 @@ const page = () => {
                             {/* Study Rooms */}
                             <div className="flex flex-col gap-3">
                                 <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-500 px-1">
-                                    Study Rooms
+                                    <BookOpenText />Study Rooms
                                 </h3>
-                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
-                                    {[
-                                        { name: 'Study Room 1' },
-                                        { name: 'Study Room 2' },
-                                        { name: 'Study Room 3' },
-                                    ].map((room) => (
+                                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 sm:gap-4">
+                                    {facility.studyRooms.map((room) => (
                                         <div
-                                            key={room.name}
+                                            key={room.FacilityID}
                                             className="h-20 sm:h-24 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl flex flex-col items-center justify-center gap-1 shadow-sm hover:border-primary transition-colors cursor-pointer px-2"
+                                            onClick={()=>{
+                                                setIsSelecting(true)
+                                                setSelectedFacility(room);
+                                            }}
                                         >
-                                            <span className="text-sm sm:text-lg font-bold text-slate-900 dark:text-slate-100 text-center leading-tight">{room.name}</span>
+                                            <span className="text-sm sm:text-lg font-bold text-slate-900 dark:text-slate-100 text-center leading-tight">{room.Name}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -151,25 +232,21 @@ const page = () => {
                             </div>
                         </div>
 
-                        {/* Outer container (Kept in case you have other facility categories next to this) */}
                         <div className="grid grid-cols-1 lg:col-span-full gap-4 sm:gap-6 lg:gap-8">
                             <div className="flex flex-col gap-3">
 
-                                {/* INNER GRID FIX: Uses auto-fill so boxes never shrink smaller than 130px */}
-                                <div className="grid grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-3 sm:gap-4">
-                                    {[
-                                        { name: 'Badminton Court 1' },
-                                        { name: 'Basketball Court 1' },
-                                        { name: 'Gym' },
-                                    ].map((room) => (
+                                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 sm:gap-4">
+                                    {facility.sports.map((room) => (
                                         <div
-                                            key={room.name}
-                                            // FIX: Changed h-20 to min-h-[5rem] so it can expand if needed, added p-3 for breathing room
+                                            key={room.FacilityID}
                                             className="min-h-[5rem] sm:min-h-[6rem] p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl flex flex-col items-center justify-center gap-1 shadow-sm hover:border-primary transition-colors cursor-pointer"
+                                            onClick={()=>{
+                                                setIsSelecting(true)
+                                                setSelectedFacility(room);
+                                            }}
                                         >
-                                            {/* FIX: Changed sm:text-lg to sm:text-base so it fits the box perfectly */}
-                                            <span className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 text-center leading-tight">
-                                                {room.name}
+                                            <span className="text-sm sm:text-lg font-bold text-slate-900 dark:text-slate-100 text-center leading-tight">
+                                                {room.Name}
                                             </span>
                                         </div>
                                     ))}
@@ -180,6 +257,13 @@ const page = () => {
                     </section>
                 </div>
             </div>
+            {isSelecting ?
+                <FacilityPopUp
+                    facility={selectedFacility}
+                    onClose={() => setIsSelecting(false)}
+                />
+                : null}
+
         </main>
     )
 }
