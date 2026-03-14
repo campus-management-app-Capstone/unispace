@@ -75,8 +75,8 @@ const studentNavItems = [
     icon: Wallet, 
   },
   { 
-    label: "map", 
-    href: "/map", 
+    label: "Map", 
+    href: "/Map", 
     icon: MapPin, 
   },
   { 

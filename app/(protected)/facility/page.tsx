@@ -97,6 +97,7 @@ const page = () => {
                             <h1 className="text-slate-900 dark:text-slate-100 text-3xl sm:text-4xl lg:text-5xl font-black leading-tight tracking-[-0.033em]">
                                 Campus Facilities
                             </h1>
+                            
                         </div>
                         {/*
                         <div className="w-full max-w-3xl mt-2 sm:mt-4">

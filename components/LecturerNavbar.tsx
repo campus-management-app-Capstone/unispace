@@ -75,7 +75,7 @@ const studentNavItems = [
     icon: Wallet, 
   },
   { 
-    label: "map", 
+    label: "Map", 
     href: "/map", 
     icon: MapPin, 
   },
@@ -86,7 +86,7 @@ const studentNavItems = [
   },
   { 
     label: "More", 
-    href: "/student/more", 
+    href: "/lecturer/more", 
     icon: ClipboardList, 
   },
 ] as const;
