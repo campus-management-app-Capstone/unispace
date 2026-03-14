@@ -11,6 +11,7 @@ import {
     FieldGroup,
     FieldLabel,
 } from "@/components/ui/field";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
     Select,
     SelectContent,
@@ -28,12 +29,14 @@ const subjectFormSchema = z.object({
     CourseID: z.string().min(1, "Please select a course."),
     Duration: z.number().min(1, "At least 1 hour is required.").max(4, "Maximum 4 hours."),
     Semester: z.number().int("Must be a whole number.").min(1, "At least semester 1 is required.").max(16, "Maximum semester 16."),
+    LecturerIDs: z.array(z.string()).min(1, "Please select at least one lecturer."),
 });
 
 export type subjectFormValues = z.infer<typeof subjectFormSchema>;
 
 interface CreateNewSubjectFormProps {
     courses: { CourseID: string; Name: string; TotalSemester: number }[];
+    lecturers: { LecturerID: string; LecturerCode: string; Name: string }[];
     onSubmit: (data: subjectFormValues) => Promise<void>;
     isSubmitting: boolean;
     onCancel: () => void;
@@ -45,6 +48,7 @@ interface CreateNewSubjectFormProps {
  */
 export default function CreateNewSubjectForm({
     courses,
+    lecturers,
     onSubmit,
     isSubmitting,
     onCancel,
@@ -57,6 +61,7 @@ export default function CreateNewSubjectForm({
             CourseID: courses[0]?.CourseID || "",
             Duration: 1,
             Semester: 1,
+            LecturerIDs: [],
         },
     });
 
@@ -236,6 +241,65 @@ export default function CreateNewSubjectForm({
                             )}
                         </Field>
                     )}
+                />
+
+                {/* Lecturers — assign one or more lecturers to teach this subject */}
+                <Controller
+                    name="LecturerIDs"
+                    control={form.control}
+                    render={({ field, fieldState }) => {
+                        const selectedLecturerIDs = field.value ?? [];
+
+                        const handleToggleLecturer = (lecturerID: string) => {
+                            if (selectedLecturerIDs.includes(lecturerID)) {
+                                field.onChange(
+                                    selectedLecturerIDs.filter((id) => id !== lecturerID)
+                                );
+                                return;
+                            }
+
+                            field.onChange([...selectedLecturerIDs, lecturerID]);
+                        };
+
+                        return (
+                            <Field data-invalid={fieldState.invalid}>
+                                <FieldLabel>Assigned Lecturers</FieldLabel>
+                                <div className="max-h-48 space-y-2 overflow-y-auto rounded-md border px-3 py-2">
+                                    {lecturers.length === 0 ? (
+                                        <p className="text-sm text-muted-foreground">
+                                            No lecturers available to assign.
+                                        </p>
+                                    ) : (
+                                        lecturers.map((lecturer) => (
+                                            <label
+                                                key={lecturer.LecturerID}
+                                                className="flex items-center gap-2 text-sm"
+                                            >
+                                                <Checkbox
+                                                    checked={selectedLecturerIDs.includes(
+                                                        lecturer.LecturerID
+                                                    )}
+                                                    onCheckedChange={() =>
+                                                        handleToggleLecturer(lecturer.LecturerID)
+                                                    }
+                                                    aria-label={`Assign ${lecturer.LecturerCode}`}
+                                                />
+                                                <span className="font-medium">
+                                                    {lecturer.LecturerCode}
+                                                </span>
+                                                <span className="text-muted-foreground">
+                                                    {lecturer.Name}
+                                                </span>
+                                            </label>
+                                        ))
+                                    )}
+                                </div>
+                                {fieldState.invalid && (
+                                    <FieldError errors={[fieldState.error]} />
+                                )}
+                            </Field>
+                        );
+                    }}
                 />
             </FieldGroup>
 

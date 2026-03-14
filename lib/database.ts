@@ -578,3 +578,144 @@ export async function getStudentWithDetails(studentId: string) {
   if (error) throw error;
   return data;
 }
+
+// ============================================================================
+// CLASS OPERATIONS
+// ============================================================================
+
+/**
+ * Shape of a class record joined with its subject and lecturer.
+ */
+export interface ClassWithSubjectAndLecturer {
+  ClassID: string;
+  Group: string;
+  LecturerID: string;
+  SubjectID: string;
+  Type: string | null;
+  Subject: {
+    SubjectID: string;
+    Name: string;
+    Duration: number | null;
+  } | null;
+  Lecturer: {
+    LecturerID: string;
+    LecturerCode: string;
+  } | null;
+}
+
+/**
+ * Get all classes with related subject and lecturer information.
+ */
+export async function getAllClassesWithDetails() {
+  const supabase = await createClerkSupabaseClient();
+  const { data, error } = await supabase
+    .from('Class')
+    .select(`
+      ClassID,
+      Group,
+      LecturerID,
+      SubjectID,
+      Type,
+      Subject (
+        SubjectID,
+        Name,
+        Duration
+      ),
+      Lecturer (
+        LecturerID,
+        LecturerCode
+      )
+    `)
+    .order('ClassID', { ascending: true });
+
+  if (error) throw error;
+  return (data || []) as ClassWithSubjectAndLecturer[];
+}
+
+/**
+ * Create a new class record.
+ */
+export async function createClass(classData: TablesInsert<'Class'>) {
+  const supabase = await createClerkSupabaseClient();
+  const { data, error } = await supabase
+    .from('Class')
+    .insert([classData])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Update an existing class by its ClassID.
+ */
+export async function updateClass(
+  classId: string,
+  updates: TablesUpdate<'Class'>
+) {
+  const supabase = await createClerkSupabaseClient();
+  const { data, error } = await supabase
+    .from('Class')
+    .update(updates)
+    .eq('ClassID', classId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Delete a class by its ClassID.
+ */
+export async function deleteClass(classId: string) {
+  const supabase = await createClerkSupabaseClient();
+  const { error } = await supabase
+    .from('Class')
+    .delete()
+    .eq('ClassID', classId);
+
+  if (error) throw error;
+}
+
+/**
+ * Get a single class with its subject, lecturer, and enrolled students.
+ */
+export async function getClassWithStudents(classId: string) {
+  const supabase = await createClerkSupabaseClient();
+  const { data, error } = await supabase
+    .from('Class')
+    .select(`
+      ClassID,
+      Group,
+      LecturerID,
+      SubjectID,
+      Type,
+      Subject (
+        SubjectID,
+        Name,
+        Duration
+      ),
+      Lecturer (
+        LecturerID,
+        LecturerCode
+      ),
+      ClassRegistration (
+        ClassRegistrationID,
+        Enrollment (
+          EnrollmentID,
+          Intake,
+          Student (
+            StudentID,
+            StudentCode
+          )
+        )
+      )
+    `)
+    .eq('ClassID', classId)
+    .single();
+
+  if (error) throw error;
+  return data;
+}
