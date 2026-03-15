@@ -56,12 +56,12 @@ import { cn } from "@/lib/utils";
 const studentNavItems = [
   { 
     label: "Timetable", 
-    href: "/student/timetable", 
+    href: "/lecturer/timetable", 
     icon: Calendar, 
   },
   { 
     label: "Attendance", 
-    href: "/student/attendance", 
+    href: "/lecturer/attendance", 
     icon: GraduationCap, 
   },
   { 

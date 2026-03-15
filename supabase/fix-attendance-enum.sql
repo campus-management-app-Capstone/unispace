@@ -1,0 +1,11 @@
+-- Reference: code_status enum in DB is Ongoing | Ended (not OPEN/CLOSED).
+-- attendance_status enum is Present | Late | Absent.
+--
+-- If you see "invalid input value for enum code_status", ensure lib/database.ts
+-- uses: createAttendance/getActiveAttendanceByClassId -> 'Ongoing';
+--       closeAttendance -> 'Ended'.
+--
+-- To list current enum values in Supabase SQL Editor:
+--   SELECT enumlabel FROM pg_enum
+--   WHERE enumtypid = (SELECT oid FROM pg_type WHERE typname = 'code_status')
+--   ORDER BY enumsortorder;
