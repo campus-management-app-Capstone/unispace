@@ -260,8 +260,8 @@ export default async function StudentTimetablePage({
         </div>
 
         <section className="space-y-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-          {/* Day selector: MON, TUE, WED, THU, FRI (clickable) */}
-          <div className="flex flex-wrap gap-2">
+          {/* Day selector: full-width row, MON–FRI evenly spaced to match timetable container */}
+          <div className="grid w-full grid-cols-5 gap-2">
             {WEEK_DAYS.map((dayKey, index) => {
               const isActive = dayKey === selectedDay;
               const hasSlots = (slotsByDay[dayKey] ?? []).length > 0;
@@ -269,7 +269,7 @@ export default async function StudentTimetablePage({
                 <Link
                   key={dayKey}
                   href={`/student/timetable?day=${dayKey}`}
-                  className={`inline-flex min-w-[4rem] items-center justify-center rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
+                  className={`flex w-full items-center justify-center rounded-lg border px-2 py-2.5 text-sm font-medium transition-colors sm:px-3 ${
                     isActive
                       ? 'border-gray-800 bg-gray-800 text-white'
                       : hasSlots
