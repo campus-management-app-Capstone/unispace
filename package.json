@@ -23,6 +23,7 @@
     "@mui/material": "^7.3.7",
     "@stripe/stripe-js": "^8.8.0",
     "@supabase/supabase-js": "^2.95.2",
+    "@typebot.io/react": "^0.9.20",
     "@voltagent/core": "^2.6.8",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

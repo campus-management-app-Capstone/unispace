@@ -25,7 +25,8 @@ import {
   ChartBar,
   Wallet,
   Car,
-  MapPin
+  MapPin,
+  HelpCircle
 } from "lucide-react";
 import {
   NavigationMenu,
@@ -88,6 +89,11 @@ const studentNavItems = [
     label: "More", 
     href: "/student/more", 
     icon: ClipboardList, 
+  },
+  {
+    label: "Help Centre",
+    href: "/help",
+    icon: HelpCircle,
   },
 ] as const;
 
