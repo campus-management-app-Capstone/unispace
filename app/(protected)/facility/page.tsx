@@ -1,11 +1,15 @@
 "use client"
 
 import FacilityPopUp from '@/components/FacilityPopUp';
-import { Book, BookOpenText, Dumbbell, Landmark, MonitorCog, NotebookPen, School, Search } from 'lucide-react'
+import { Button } from '@base-ui/react';
+import { Book, BookOpenText, Dumbbell, Landmark, Link, MonitorCog, NotebookPen, School, Search, Ticket } from 'lucide-react'
+import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react'
 import { toast } from 'react-toastify';
 
 const page = () => {
+
+    const router = useRouter();
 
     const [isLoading, setIsLoading] = useState(true);
     const [isSelecting, setIsSelecting] = useState(false);
@@ -76,7 +80,11 @@ const page = () => {
     }, [])
 
     if (isLoading) {
-        return;
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            </div>
+        );
     }
 
     return (
@@ -89,15 +97,23 @@ const page = () => {
             <div className="absolute inset-0 bg-white/70 dark:bg-slate-950/70 backdrop-blur-[1px] z-1"></div>
 
             {/* main */}
-            <div className="relative flex justify-center py-3 px-5 z-10">
+            <div className="relative flex justify-center py-5 px-5 z-10">
                 <div className="layout-content-container flex flex-col max-w-[1280px] w-full flex-1">
                     {/* Hero Section & Search */}
-                    <div className="flex flex-col gap-4 sm:gap-6 mb-8 sm:mb-12">
-                        <div className="flex flex-col gap-2 sm:gap-3">
+                    <div className="flex flex-col gap-4 sm:gap-6 mb-5 sm:mb-5">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-3">
                             <h1 className="text-slate-900 dark:text-slate-100 text-3xl sm:text-4xl lg:text-5xl font-black leading-tight tracking-[-0.033em]">
                                 Campus Facilities
                             </h1>
-                            
+
+                            <Button
+                                onClick={() => router.push("/facility/mybooking")}
+                                variant="secondary"
+                                className="cursor-pointer w-fit shrink-0 flex items-center gap-2 font-bold text-sm shadow-sm hover:shadow transition-all"
+                            >
+                                <Ticket className="w-4 h-4" />
+                                <span>My Bookings</span>
+                            </Button>
                         </div>
                         {/*
                         <div className="w-full max-w-3xl mt-2 sm:mt-4">
@@ -146,7 +162,7 @@ const page = () => {
                                         <div
                                             key={room.FacilityID}
                                             className="h-20 sm:h-24 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl flex flex-col items-center justify-center gap-1 shadow-sm hover:border-primary transition-colors cursor-pointer"
-                                            onClick={()=>{
+                                            onClick={() => {
                                                 setIsSelecting(true)
                                                 setSelectedFacility(room);
                                             }}
@@ -167,7 +183,7 @@ const page = () => {
                                         <div
                                             key={room.FacilityID}
                                             className="h-20 sm:h-24 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl flex flex-col items-center justify-center gap-1 shadow-sm hover:border-primary transition-colors cursor-pointer px-2"
-                                            onClick={()=>{
+                                            onClick={() => {
                                                 setIsSelecting(true)
                                                 setSelectedFacility(room);
                                             }}
@@ -187,7 +203,7 @@ const page = () => {
                                         <div
                                             key={room.FacilityID}
                                             className="h-20 sm:h-24 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl flex flex-col items-center justify-center gap-1 shadow-sm hover:border-primary transition-colors cursor-pointer px-2"
-                                            onClick={()=>{
+                                            onClick={() => {
                                                 setIsSelecting(true)
                                                 setSelectedFacility(room);
                                             }}
@@ -208,7 +224,7 @@ const page = () => {
                                         <div
                                             key={room.FacilityID}
                                             className="h-20 sm:h-24 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl flex flex-col items-center justify-center gap-1 shadow-sm hover:border-primary transition-colors cursor-pointer px-2"
-                                            onClick={()=>{
+                                            onClick={() => {
                                                 setIsSelecting(true)
                                                 setSelectedFacility(room);
                                             }}
@@ -241,7 +257,7 @@ const page = () => {
                                         <div
                                             key={room.FacilityID}
                                             className="min-h-[5rem] sm:min-h-[6rem] p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl flex flex-col items-center justify-center gap-1 shadow-sm hover:border-primary transition-colors cursor-pointer"
-                                            onClick={()=>{
+                                            onClick={() => {
                                                 setIsSelecting(true)
                                                 setSelectedFacility(room);
                                             }}
@@ -258,14 +274,16 @@ const page = () => {
                     </section>
                 </div>
             </div>
-            {isSelecting ?
-                <FacilityPopUp
-                    facility={selectedFacility}
-                    onClose={() => setIsSelecting(false)}
-                />
-                : null}
+            {
+                isSelecting ?
+                    <FacilityPopUp
+                        facility={selectedFacility}
+                        onClose={() => setIsSelecting(false)}
+                    />
+                    : null
+            }
 
-        </main>
+        </main >
     )
 }
 
