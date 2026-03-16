@@ -123,3 +123,11 @@
     @apply bg-background text-foreground;
   }
 }
+
+.help-icon {
+  display: block !important;
+  width: 20px !important;
+  height: 20px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
