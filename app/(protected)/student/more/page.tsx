@@ -26,7 +26,7 @@ const StudentMorePage = () => {
     { key: 'map', label: 'Map', href: '#', Icon: MapPinned },
     { key: 'form', label: 'Form', href: '#', Icon: FileText },
     { key: 'helpdesk', label: 'Helpdesk', href: '#', Icon: LifeBuoy },
-    { key: 'announcement', label: 'Announcement', href: '#', Icon: Megaphone },
+    { key: 'announcement', label: 'Announcement', href: '/announcement', Icon: Megaphone },
     { key: 'wallet', label: 'Wallet', href: '#', Icon: Wallet },
     { key: 'parking', label: 'Parking', href: '#', Icon: ParkingCircle },
     { key: 'profile', label: 'Profile', href: '#', Icon: User2 },
