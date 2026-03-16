@@ -159,7 +159,7 @@ const helpSections = [
       "View overall attendance and mark with a code.",
     steps: [
       "Open Attendance to see overall status by class.",
-      "Tap 'Mark Attendance'.",
+      "Tap 'Sign in Attendance'.",
       "Enter the attendance code provided by your lecturer.",
     ],
     tips: [
