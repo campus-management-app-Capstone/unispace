@@ -9,6 +9,8 @@ import {
   Info,
   AlertTriangle,
   HelpCircle,
+  ClipboardCheck,
+  Bug,
 } from "lucide-react";
 
 const iconClass = "help-icon h-5 w-5";
@@ -34,7 +36,11 @@ const renderIcon = (key: keyof typeof iconMap): ReactElement => (
   />
 );
 
-/* ---------- QUICK LINKS ---------- */
+const renderFormIcon = (icon: ReactElement): ReactElement => (
+  <span className="help-icon h-5 w-5 text-white">{icon}</span>
+);
+
+/* Quick Links */
 
 const quickLinks = [
   {
@@ -75,7 +81,22 @@ const quickLinks = [
   },
 ] as const;
 
-/* ---------- HELP SECTIONS ---------- */
+const formLinks = [
+  {
+    label: "Campus Evaluation",
+    href: "https://docs.google.com/forms/d/e/1FAIpQLSfZ3TXVccBtIFxoOyLJCsTGsznKy25Wl3LaNoju7HKfxi3saQ/viewform?usp=publish-editor",
+    description: "Share feedback on the campus experience.",
+    icon: <ClipboardCheck className="h-5 w-5" />,
+  },
+  {
+    label: "Report Issue",
+    href: "https://docs.google.com/forms/d/e/1FAIpQLSciYhXQ1QI8jd_hVRRGXJafyyClIh_LY20j6rCnSt6h7_S_EQ/viewform?embedded=true",
+    description: "Report issues to help us improve",
+    icon: <Bug className="h-5 w-5" />,
+  },
+] as const;
+
+/* Help Sections */
 
 const helpSections = [
   {
@@ -169,7 +190,7 @@ const helpSections = [
   },
 ] as const;
 
-/* ---------- FAQ ---------- */
+/* FAQ */
 
 const faqItems = [
   {
@@ -191,7 +212,7 @@ const faqItems = [
   },
 ] as const;
 
-/* ---------- COMPONENT ---------- */
+/* Component */
 
 export default function HelpPage() {
   const [isBotOpen, setIsBotOpen] = useState(true);
@@ -247,10 +268,33 @@ export default function HelpPage() {
               </Link>
             ))}
           </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            {formLinks.map(({ label, href, description, icon }) => (
+              <a
+                key={href}
+                href={href}
+                target="_blank"
+                rel="noreferrer"
+                className="group rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+              >
+                <div className="flex items-start gap-3">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900">
+                    {renderFormIcon(icon)}
+                  </span>
+
+                  <div>
+                    <p className="font-semibold">{label}</p>
+                    <p className="text-sm text-slate-600">{description}</p>
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* HELP SECTIONS */}
+      {/* Help Sections */}
       <div className="mx-auto max-w-6xl px-6 pb-16 space-y-10">
         <section className="grid gap-6 lg:grid-cols-2">
           {helpSections.map(({ title, summary, steps, tips, iconKey }) => (
@@ -305,7 +349,7 @@ export default function HelpPage() {
           ))}
         </section>
 
-        {/* TROUBLESHOOTING */}
+        {/* Troubleshooting */}
         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-xl font-bold">Troubleshooting</h2>
 
@@ -328,7 +372,7 @@ export default function HelpPage() {
           </div>
         </section>
 
-        {/* CHATBOT INFO */}
+        {/* Chatbot Info */}
         <section className="rounded-3xl border border-slate-200 bg-slate-900 p-6 text-slate-100 shadow-sm">
           <h2 className="text-xl font-bold">Need guided help?</h2>
 
@@ -339,7 +383,7 @@ export default function HelpPage() {
         </section>
       </div>
 
-      {/* TYPEBOT */}
+      {/* Typebot */}
       {isLoaded && (
         <Bubble
           key={studentName ?? "guest"}

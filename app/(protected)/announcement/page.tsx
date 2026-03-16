@@ -117,7 +117,7 @@ async function initiateSurveyAction(formData: FormData) {
     'Lecturer';
 
   const surveyUrl = buildSurveyUrl(classId, lecturerName);
-  const title = `Survey for ${classId} (${lecturerName})`;
+  const title = `Survey for ${classId} (Lecturer: ${lecturerName})`;
   const content = `Please complete the class survey for ${classId}.\nSurvey link: ${surveyUrl}`;
 
   const supabase = await createClerkSupabaseClient();
