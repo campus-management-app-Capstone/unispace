@@ -7,6 +7,7 @@ import {
   hasAttendanceRecord,
   createAttendanceRecord,
 } from "@/lib/database";
+import { ensureCampusIp } from "@/lib/ip-range";
 
 /**
  * POST: Student submits attendance using a 6-character code only.
@@ -19,6 +20,11 @@ import {
  * - Create a Present attendance record on success.
  */
 export async function POST(request: Request) {
+  const campusResult = ensureCampusIp(request);
+  if (!campusResult.ok) {
+    return NextResponse.json({ error: campusResult.reason }, { status: 403 });
+  }
+
   const { sessionClaims } = await auth();
   const userId = sessionClaims?.sub as string | undefined;
 

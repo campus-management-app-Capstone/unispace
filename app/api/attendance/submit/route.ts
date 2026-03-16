@@ -6,12 +6,18 @@ import {
   hasAttendanceRecord,
   createAttendanceRecord,
 } from "@/lib/database";
+import { ensureCampusIp } from "@/lib/ip-range";
 
 /**
  * POST: Student submits attendance with the displayed code.
  * Body: { classId: string, code: string }
  */
 export async function POST(request: Request) {
+  const campusResult = ensureCampusIp(request);
+  if (!campusResult.ok) {
+    return NextResponse.json({ error: campusResult.reason }, { status: 403 });
+  }
+
   const { sessionClaims } = await auth();
   const userId = sessionClaims?.sub as string | undefined;
 

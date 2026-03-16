@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 import Image from "next/image";
 import {
+  House,
   BookOpen,
   Users,
   GraduationCap,
@@ -69,11 +70,6 @@ const courseSubItems = [
     href: "/admin/course/class", 
     icon: School, 
   },
-  { 
-    label: "Class Registration", 
-    href: "/admin/course/classregistration", 
-    icon: Blocks, 
-  },
 ] as const;
 
 /** Top-level admin navigation items (direct links without sub-menus) */
@@ -92,6 +88,11 @@ const adminNavItems = [
     label: "Timetable", 
     href: "/admin/timetable", 
     icon: Calendar, 
+  },
+  { 
+    label: "Home", 
+    href: "/admin/home", 
+    icon: House, 
   },
   { 
     label: "Facility", 

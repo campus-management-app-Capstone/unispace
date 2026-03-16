@@ -80,15 +80,18 @@ export default function StudentAttendanceSignInPage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-[60vh] max-w-xl flex-col items-center justify-center px-4">
-      <div className="w-full rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
+    <div className="mx-auto flex min-h-[60vh] max-w-xl flex-col items-center justify-center px-4 py-6">
+      <div className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
         <div className="mb-6 text-center">
           <p className="text-sm font-medium text-gray-500">Enter Attendance Code</p>
           <h1 className="mt-2 text-2xl font-semibold text-gray-900">Sign In Attendance</h1>
+          <p className="mt-2 text-xs text-gray-500">
+            You must be connected to the campus WiFi network when signing in.
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="flex items-center justify-between gap-2">
+        <form onSubmit={handleSubmit} className="mt-6 space-y-6">
+          <div className="flex items-center justify-center gap-2">
             {digits.map((digit, index) => (
               <input
                 key={index}
@@ -101,7 +104,7 @@ export default function StudentAttendanceSignInPage() {
                 value={digit}
                 onChange={(event) => handleChange(index, event.target.value)}
                 onKeyDown={(event) => handleKeyDown(index, event)}
-                className="h-14 w-12 rounded-md border-b-2 border-dashed border-gray-400 bg-transparent text-center text-2xl font-semibold tracking-[0.3em] text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-0"
+                className="h-12 w-9 rounded-md border-b-2 border-dashed border-gray-400 bg-transparent text-center text-xl font-semibold tracking-[0.15em] text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-0 sm:h-14 sm:w-11 sm:text-2xl"
                 aria-label={`Attendance code digit ${index + 1}`}
               />
             ))}
