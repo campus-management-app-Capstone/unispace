@@ -130,7 +130,9 @@ export default function AddLecturerPage() {
 
       router.push("/admin/lecturer");
     } catch (err) {
-      console.error(err);
+      if (!(err instanceof Error) || !err.message.toLowerCase().includes("email already exists")) {
+        console.error(err);
+      }
       toast.error(err instanceof Error ? err.message : "Failed to create lecturer");
     } finally {
       setLoading(false);

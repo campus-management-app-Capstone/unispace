@@ -12,15 +12,40 @@ export async function POST(req: NextRequest) {
 
     const supabase = createBrowserSupabaseClient();
     const clerk = await clerkClient();
+    const normalizedEmail = email.trim().toLowerCase();
 
-    const clerkUser = await clerk.users.createUser({
-      firstName: name,
-      password,
-      emailAddress: [email],
-      publicMetadata: {
-        role: "lecturer",
-      },
+    const existingUsers = await clerk.users.getUserList({
+      emailAddress: [normalizedEmail],
+      limit: 1,
     });
+
+    if (existingUsers.data.length > 0) {
+      return NextResponse.json(
+        { error: "Email already exists. Please use a different email." },
+        { status: 409 }
+      );
+    }
+
+    let clerkUser;
+    try {
+      clerkUser = await clerk.users.createUser({
+        firstName: name,
+        password,
+        emailAddress: [normalizedEmail],
+        publicMetadata: {
+          role: "lecturer",
+        },
+      });
+    } catch (error: any) {
+      const errorCode = error?.errors?.[0]?.code;
+      if (errorCode === "form_identifier_exists" || errorCode === "form_identifier_not_unique") {
+        return NextResponse.json(
+          { error: "Email already exists. Please use a different email." },
+          { status: 409 }
+        );
+      }
+      throw error;
+    }
 
     const userId = clerkUser.id;
 
@@ -67,8 +92,15 @@ export async function POST(req: NextRequest) {
       throw error;
     }
   } catch (err) {
-    console.error("Error in POST /api/admin/lecturers/create:", err);
     const message = err instanceof Error ? err.message : "Internal server error";
+    if (
+      !(
+        typeof message === "string" &&
+        message.toLowerCase().includes("email already exists")
+      )
+    ) {
+      console.error("Error in POST /api/admin/lecturers/create:", err);
+    }
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

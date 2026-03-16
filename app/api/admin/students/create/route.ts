@@ -14,13 +14,30 @@ export async function POST(req: NextRequest) {
 
     // Clerk Client
     const clerk = await clerkClient();
+    const normalizedEmail = email?.trim().toLowerCase();
+
+    if (!name?.trim() || !password?.trim() || !normalizedEmail || !courseId || !intake) {
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    const existingUsers = await clerk.users.getUserList({
+      emailAddress: [normalizedEmail],
+      limit: 1,
+    });
+
+    if (existingUsers.data.length > 0) {
+      return NextResponse.json(
+        { error: "Email already exists. Please use a different email." },
+        { status: 409 }
+      );
+    }
 
     // Create Clerk User
     try {
       const clerkUser = await clerk.users.createUser({
         firstName: name,
         password: password,
-        emailAddress: [email],
+        emailAddress: [normalizedEmail],
         publicMetadata: {
           role: "student",
         },
@@ -91,6 +108,14 @@ export async function POST(req: NextRequest) {
         throw error; // Re-throw to be caught by outer catch
       }
     } catch (error: any) {
+      const errorCode = error?.errors?.[0]?.code;
+      if (errorCode === "form_identifier_exists" || errorCode === "form_identifier_not_unique") {
+        return NextResponse.json(
+          { error: "Email already exists. Please use a different email." },
+          { status: 409 }
+        );
+      }
+
       console.error("Error creating user:", error);
       return NextResponse.json(
         { error: "Failed to create user: " + error.message },
