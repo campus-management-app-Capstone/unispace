@@ -178,7 +178,7 @@ export default function AnnouncementPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [announcements, setAnnouncements] = useState([])
   const [search, setSearch] = useState('')
-  const [targetFilter, setTargetFilter] = useState('All')
+  const [targetFilter, setTargetFilter] = useState('')
   const [showModal, setShowModal] = useState(false)
 
   const fetchAnnData = async () => {
@@ -297,7 +297,7 @@ export default function AnnouncementPage() {
                 onChange={e => setTargetFilter(e.target.value)}
                 className="w-full appearance-none pl-4 pr-10 py-3 sm:py-2.5 rounded-xl border border-slate-200 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-800 transition-all bg-white shadow-sm cursor-pointer"
               >
-                {TARGET_OPTIONS.map(o => <option key={o} value={o}>{o || 'Show All'}</option>)}
+                {TARGET_OPTIONS.map(o => <option key={o} value={o}>{o || ''}</option>)}
               </select>
               <ChevronDownIcon className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
             </div>
