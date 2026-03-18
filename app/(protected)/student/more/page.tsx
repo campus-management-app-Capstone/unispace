@@ -23,13 +23,13 @@ const StudentMorePage = () => {
     href: string;
     Icon: React.ComponentType<{ className?: string }>;
   }[] = [
-    { key: 'map', label: 'Map', href: '#', Icon: MapPinned },
-    { key: 'form', label: 'Form', href: '#', Icon: FileText },
-    { key: 'helpdesk', label: 'Helpdesk', href: '#', Icon: LifeBuoy },
-    { key: 'announcement', label: 'Announcement', href: '#', Icon: Megaphone },
-    { key: 'wallet', label: 'Wallet', href: '#', Icon: Wallet },
-    { key: 'parking', label: 'Parking', href: '#', Icon: ParkingCircle },
-    { key: 'profile', label: 'Profile', href: '#', Icon: User2 },
+    { key: 'map', label: 'Map', href: '/map', Icon: MapPinned },
+    { key: 'form', label: 'Form', href: '/evaluation', Icon: FileText },
+    { key: 'helpdesk', label: 'Helpdesk', href: '/help', Icon: LifeBuoy },
+    { key: 'announcement', label: 'Announcement', href: '/announcement', Icon: Megaphone },
+    { key: 'wallet', label: 'Wallet', href: '/wallet', Icon: Wallet },
+    { key: 'parking', label: 'Parking', href: '/parking', Icon: ParkingCircle },
+    { key: 'profile', label: 'Profile', href: '/home', Icon: User2 },
   ];
 
   return (
