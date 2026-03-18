@@ -18,9 +18,9 @@ export default async function LandingPage() {
 
   return (
     <div className="flex h-screen w-full items-center justify-center">
-      <Link href="/sign-in">
+      {/* <Link href="/sign-in">
         <Button>Sign In</Button>
-      </Link>
+      </Link> */}
       <Landing />
     </div>
   );
