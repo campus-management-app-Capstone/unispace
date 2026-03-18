@@ -1,0 +1,124 @@
+import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
+import {
+  getLecturerByUserId,
+  getAttendanceById,
+  getClassWithStudents,
+  getAttendanceRecordsWithStudents,
+} from "@/lib/database";
+
+/**
+ * GET: Session details and student list with status for the attendance code page.
+ * Returns classId, date, startTime, code, subjectName, durationHours, classGroup,
+ * and students array with studentId, studentCode, status (Present | Absent).
+ */
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ attendanceId: string }> }
+) {
+  const { sessionClaims } = await auth();
+  const userId = sessionClaims?.sub as string | undefined;
+
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { attendanceId } = await params;
+  if (!attendanceId) {
+    return NextResponse.json(
+      { error: "attendanceId is required" },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const lecturer = await getLecturerByUserId(userId);
+    if (!lecturer) {
+      return NextResponse.json(
+        { error: "Lecturer not found" },
+        { status: 403 }
+      );
+    }
+
+    const attendance = await getAttendanceById(attendanceId);
+    const classData = await getClassWithStudents(attendance.ClassID);
+    const classTyped = classData as {
+      ClassID: string;
+      Group?: string | null;
+      Subject?: { Name?: string | null; Duration?: number | null } | null;
+      ClassRegistration?: Array<{
+        Enrollment?: {
+          Student?: { StudentID?: string | null; StudentCode?: string | null } | null;
+        } | null;
+      }>;
+    } | null;
+
+    const lecturerId = (classData as { LecturerID?: string })?.LecturerID;
+    if (lecturerId !== lecturer.LecturerID) {
+      return NextResponse.json(
+        { error: "You do not own this attendance session" },
+        { status: 403 }
+      );
+    }
+
+    const records = await getAttendanceRecordsWithStudents(attendanceId);
+    const statusByStudentId = new Map(
+      records.map((r) => [r.StudentID, r.Status as "Present" | "Absent"])
+    );
+    const codeByStudentId = new Map(
+      records.map((r) => [r.StudentID, r.Student?.StudentCode ?? r.StudentID])
+    );
+
+    const studentsFromClass =
+      classTyped?.ClassRegistration?.map((reg) => reg.Enrollment?.Student).filter(Boolean) ?? [];
+    const rosterMap = new Map<
+      string,
+      { StudentID: string; StudentCode: string | null }
+    >();
+    studentsFromClass.forEach((s) => {
+      const t = s as { StudentID: string; StudentCode: string | null };
+      if (t?.StudentID) rosterMap.set(t.StudentID, t);
+    });
+    records.forEach((r) => {
+      if (!rosterMap.has(r.StudentID))
+        rosterMap.set(r.StudentID, {
+          StudentID: r.StudentID,
+          StudentCode: r.Student?.StudentCode ?? null,
+        });
+    });
+
+    const students = Array.from(rosterMap.entries())
+      .map(([id, s]) => ({
+        studentId: id,
+        studentCode: s.StudentCode ?? codeByStudentId.get(id) ?? id,
+        status: (statusByStudentId.get(id) ?? "Absent") as "Present" | "Absent",
+      }))
+      .sort((a, b) => a.studentCode.localeCompare(b.studentCode));
+
+    const subject = classTyped?.Subject;
+    const durationHours = subject?.Duration ?? null;
+
+    return NextResponse.json(
+      {
+        session: {
+          attendanceId: attendance.AttendanceID,
+          classId: attendance.ClassID,
+          date: attendance.Date,
+          startTime: attendance.StartTime,
+          code: attendance.Code,
+          subjectName: subject?.Name ?? null,
+          durationHours,
+          classGroup: classTyped?.Group ?? null,
+        },
+        students,
+      },
+      { status: 200 }
+    );
+  } catch (err) {
+    console.error("Failed to fetch attendance session:", err);
+    return NextResponse.json(
+      { error: "Failed to fetch session" },
+      { status: 500 }
+    );
+  }
+}

@@ -11,7 +11,7 @@ export default async function LandingPage() {
   if (user) {
     const role = (user.publicMetadata?.role as string) ?? undefined;
     if (role === "admin") {
-      redirect("/admin");
+      redirect("/admin/home");
     }
     redirect("/home");
   }

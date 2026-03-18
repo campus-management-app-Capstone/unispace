@@ -2,6 +2,8 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import Navbar from "@/components/navbar";
 import AdminNavbar from "@/components/AdminNavbar";
+import StudentNavbar from "@/components/StudentNavbar";
+import LecturerNavbar from "@/components/LecturerNavbar";
 
 // use currentUser() to get user role, if admin, use AdminNavbar.tsx as the navbar in admin page, other wise use navbar.tsx
 export default async function ProtectedLayout({
@@ -26,10 +28,13 @@ export default async function ProtectedLayout({
     }
     const role = (user?.publicMetadata?.role as string) ?? undefined;
     const isAdmin = role === "admin";
+    const isStudent = role === "student";
+    const isLecturer = role === "lecturer";
 
     return (
         <div className="min-h-screen flex flex-col bg-gray-50">
-            {isAdmin ? <AdminNavbar /> : <Navbar />}
+            {isAdmin ? <AdminNavbar /> : isStudent ? <StudentNavbar /> : isLecturer ? <LecturerNavbar /> : <Navbar />}
+            {/* {isAdmin ? <AdminNavbar /> : <StudentNavbar /> } */}
             <main className="flex-1 container mx-auto p-6">
                 {children}
             </main>

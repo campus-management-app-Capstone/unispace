@@ -102,7 +102,32 @@ function SemesterSection({
 
       <CollapsibleContent>
         <div className="mt-1 rounded-b-lg border border-t-0 bg-card">
-          <Table>
+          {/* Mobile list (fits within screen, no horizontal scroll) */}
+          <div className="divide-y sm:hidden">
+            {group.subjects.length === 0 ? (
+              <div className="px-4 py-6 text-center text-sm text-muted-foreground">
+                No subjects assigned to this semester.
+              </div>
+            ) : (
+              group.subjects.map((subject) => (
+                <div key={subject.SubjectID} className="px-4 py-3">
+                  <p className="truncate font-medium text-foreground">
+                    {subject.Name}
+                  </p>
+                  <div className="mt-1 flex items-center justify-between gap-3 text-xs text-muted-foreground">
+                    <span className="truncate">{subject.SubjectID}</span>
+                    <span className="shrink-0">
+                      {subject.Duration} hr{subject.Duration === 1 ? "" : "s"}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden w-full overflow-x-auto sm:block">
+            <Table className="min-w-[520px]">
             <TableHeader>
               <TableRow className="hover:bg-transparent">
                 <TableHead className="w-[45%] text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -142,7 +167,8 @@ function SemesterSection({
                 ))
               )}
             </TableBody>
-          </Table>
+            </Table>
+          </div>
         </div>
       </CollapsibleContent>
     </Collapsible>
@@ -364,7 +390,7 @@ export default function CourseDetailPage() {
           </p>
         </div>
 
-        <div className="ml-11 flex gap-2 sm:ml-0">
+        {/* <div className="ml-11 flex gap-2 sm:ml-0">
           <Button variant="outline" className="gap-2">
             <FileDown className="size-4" />
             Export PDF
@@ -373,7 +399,7 @@ export default function CourseDetailPage() {
             <Pencil className="size-4" />
             Edit Course
           </Button>
-        </div>
+        </div> */}
       </div>
 
       {/* ── Info bar ── */}
@@ -441,11 +467,11 @@ export default function CourseDetailPage() {
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Left — Curriculum Structure */}
         <div className="space-y-4 lg:col-span-2">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <h2 className="text-lg font-semibold text-foreground">
               Curriculum Structure
             </h2>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button variant="link" size="sm" onClick={expandAll}>
                 Expand All
               </Button>

@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 import Image from "next/image";
 import {
+  House,
   BookOpen,
   Users,
   GraduationCap,
@@ -21,7 +22,8 @@ import {
   ChevronDown,
   Blocks,
   UsersRound,
-  Calendar
+  Calendar,
+  ChartBar
 } from "lucide-react";
 import {
   NavigationMenu,
@@ -68,11 +70,6 @@ const courseSubItems = [
     href: "/admin/course/class", 
     icon: School, 
   },
-  { 
-    label: "Class Registration", 
-    href: "/admin/course/classregistration", 
-    icon: Blocks, 
-  },
 ] as const;
 
 /** Top-level admin navigation items (direct links without sub-menus) */
@@ -93,6 +90,11 @@ const adminNavItems = [
     icon: Calendar, 
   },
   { 
+    label: "Home", 
+    href: "/admin/home", 
+    icon: House, 
+  },
+  { 
     label: "Facility", 
     href: "/admin/facility", 
     icon: Building2, 
@@ -111,6 +113,11 @@ const adminNavItems = [
     label: "Admin", 
     href: "/admin/adminmanagement", 
     icon: UsersRound, 
+  },
+  { 
+    label: "Analytics", 
+    href: "/admin/analytics", 
+    icon: ChartBar, 
   },
 ] as const;
 
