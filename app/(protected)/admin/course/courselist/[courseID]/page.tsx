@@ -128,45 +128,45 @@ function SemesterSection({
           {/* Desktop table */}
           <div className="hidden w-full overflow-x-auto sm:block">
             <Table className="min-w-[520px]">
-              <TableHeader>
-                <TableRow className="hover:bg-transparent">
-                  <TableHead className="w-[45%] text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Subject Name
-                  </TableHead>
-                  <TableHead className="w-[25%] text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Code
-                  </TableHead>
-                  <TableHead className="w-[30%] text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Duration (hrs)
-                  </TableHead>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="w-[45%] text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Subject Name
+                </TableHead>
+                <TableHead className="w-[25%] text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Code
+                </TableHead>
+                <TableHead className="w-[30%] text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Duration (hrs)
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {group.subjects.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={3}
+                    className="h-16 text-center text-sm text-muted-foreground"
+                  >
+                    No subjects assigned to this semester.
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {group.subjects.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={3}
-                      className="h-16 text-center text-sm text-muted-foreground"
-                    >
-                      No subjects assigned to this semester.
+              ) : (
+                group.subjects.map((subject) => (
+                  <TableRow key={subject.SubjectID}>
+                    <TableCell className="font-medium text-foreground">
+                      {subject.Name}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {subject.SubjectID}
+                    </TableCell>
+                    <TableCell className="text-center text-muted-foreground">
+                      {subject.Duration}
                     </TableCell>
                   </TableRow>
-                ) : (
-                  group.subjects.map((subject) => (
-                    <TableRow key={subject.SubjectID}>
-                      <TableCell className="font-medium text-foreground">
-                        {subject.Name}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {subject.SubjectID}
-                      </TableCell>
-                      <TableCell className="text-center text-muted-foreground">
-                        {subject.Duration}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
+                ))
+              )}
+            </TableBody>
             </Table>
           </div>
         </div>
