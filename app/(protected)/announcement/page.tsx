@@ -3,11 +3,12 @@ import Link from 'next/link';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
-import { Calendar, ChevronLeft, ChevronRight, Megaphone, Send, Users } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight, Megaphone, Users } from 'lucide-react';
 
 import { createClerkSupabaseClient, createServerSupabaseClient } from '@/lib/supabase';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import SurveyInitiateForm from './SurveyInitiateForm';
 
 export const dynamic = 'force-dynamic';
 
@@ -116,8 +117,20 @@ async function initiateSurveyAction(formData: FormData) {
     user?.username ||
     'Lecturer';
 
+  const { data: existingSurvey } = await supabaseServer
+    .from('Announcement')
+    .select('AnnouncementID')
+    .eq('Target', classId)
+    .ilike('Title', `Survey for ${classId}%`)
+    .limit(1)
+    .maybeSingle();
+
+  if (existingSurvey) {
+    return;
+  }
+
   const surveyUrl = buildSurveyUrl(classId, lecturerName);
-  const title = `Survey for ${classId} (Lecturer: ${lecturerName})`;
+  const title = `Survey for ${classId} (${lecturerName})`;
   const content = `Please complete the class survey for ${classId}.\nSurvey link: ${surveyUrl}`;
 
   const supabase = await createClerkSupabaseClient();
@@ -126,11 +139,10 @@ async function initiateSurveyAction(formData: FormData) {
     Content: content,
     Target: classId,
     UserID: userId,
+    CreatedAt: new Date().toISOString(),
   });
 
-  if (error) {
-    throw error;
-  }
+  if (error) return;
 
   revalidatePath('/announcement');
 }
@@ -160,7 +172,11 @@ export default async function AnnouncementPage({
   const supabase = createServerSupabaseClient();
 
   let classIds: string[] = [];
-  let lecturerClasses: Array<{ ClassID: string; SubjectName: string | null }> = [];
+  let lecturerClasses: Array<{
+    ClassID: string;
+    SubjectName: string | null;
+    hasSurvey: boolean;
+  }> = [];
 
   if (role === 'student') {
     const { data: student } = await supabase
@@ -204,12 +220,43 @@ export default async function AnnouncementPage({
         .eq('LecturerID', lecturer.LecturerID)
         .order('ClassID', { ascending: true });
 
-      lecturerClasses =
+      const classList =
         (classes ?? []).map((row) => ({
           ClassID: row.ClassID,
           SubjectName: row.Subject?.Name ?? null,
         })) ?? [];
-      classIds = lecturerClasses.map((c) => c.ClassID);
+      classIds = classList.map((c) => c.ClassID);
+
+      let surveyTargets = new Set<string>();
+      if (classIds.length > 0) {
+        const { data: surveys } = await supabase
+          .from('Announcement')
+          .select('Title, Target')
+          .in('Target', classIds)
+          .ilike('Title', 'Survey for %');
+
+        (surveys ?? []).forEach((row) => {
+          if (
+            row.Target &&
+            row.Title &&
+            row.Title.startsWith(`Survey for ${row.Target}`)
+          ) {
+            surveyTargets.add(row.Target);
+          }
+        });
+      }
+
+      lecturerClasses = classList
+        .map((row) => ({
+          ...row,
+          hasSurvey: surveyTargets.has(row.ClassID),
+        }))
+        .sort((a, b) => {
+          if (a.hasSurvey === b.hasSurvey) {
+            return a.ClassID.localeCompare(b.ClassID);
+          }
+          return a.hasSurvey ? 1 : -1;
+        });
     }
   }
 
@@ -278,29 +325,7 @@ export default async function AnnouncementPage({
               You do not have any assigned classes yet. Once a class is assigned, you can initiate a survey here.
             </div>
           ) : (
-            <form action={initiateSurveyAction} className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
-              <div className="flex-1">
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Class
-                </label>
-                <select
-                  name="classId"
-                  className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-slate-500 focus:outline-none"
-                  defaultValue={lecturerClasses[0]?.ClassID}
-                >
-                  {lecturerClasses.map((cls) => (
-                    <option key={cls.ClassID} value={cls.ClassID}>
-                      {cls.ClassID}
-                      {cls.SubjectName ? ` - ${cls.SubjectName}` : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <Button type="submit" className="gap-2">
-                <Send className="size-4" />
-                Send Survey
-              </Button>
-            </form>
+            <SurveyInitiateForm classes={lecturerClasses} action={initiateSurveyAction} />
           )}
         </section>
       )}
