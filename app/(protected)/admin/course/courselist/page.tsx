@@ -233,18 +233,21 @@ export default function CourseListPage() {
   return (
     <div className="mx-auto w-full space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Course Directory
         </h1>
-        <Button className="gap-2" onClick={() => setIsDialogOpen(true)}>
+        <Button
+          className="gap-2 sm:self-auto"
+          onClick={() => setIsDialogOpen(true)}
+        >
           <Plus className="size-4" />
           Add New Course
         </Button>
       </div>
 
       {/* Search + Filters */}
-      <div className="flex flex-wrap items-end gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
         {/* Search */}
         <div className="flex-1 min-w-[200px] space-y-1.5">
           <label className="text-xs font-medium text-muted-foreground">
@@ -262,7 +265,7 @@ export default function CourseListPage() {
         </div>
 
         {/* Department filter */}
-        <div className="space-y-1.5">
+        <div className="w-full space-y-1.5 sm:w-auto">
           <label className="text-xs font-medium text-muted-foreground">
             Department
           </label>
@@ -270,7 +273,7 @@ export default function CourseListPage() {
             value={selectedDepartment}
             onValueChange={handleDepartmentChange}
           >
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="All Departments" />
             </SelectTrigger>
             <SelectContent>
@@ -285,12 +288,12 @@ export default function CourseListPage() {
         </div>
 
         {/* Level filter */}
-        <div className="space-y-1.5">
+        <div className="w-full space-y-1.5 sm:w-auto">
           <label className="text-xs font-medium text-muted-foreground">
             Level
           </label>
           <Select value={selectedLevel} onValueChange={handleLevelChange}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="All Levels" />
             </SelectTrigger>
             <SelectContent>
@@ -320,7 +323,8 @@ export default function CourseListPage() {
 
       {/* Course table */}
       <div className="rounded-lg border bg-card">
-        <Table className="table-fixed">
+        <div className="w-full overflow-x-auto">
+          <Table className="min-w-[640px] table-fixed">
           <TableHeader>
             <TableRow className="hover:bg-transparent">
               <TableHead className="w-[30%] text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -332,10 +336,10 @@ export default function CourseListPage() {
               <TableHead className="w-[14%] text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Level
               </TableHead>
-              <TableHead className="w-[20%] text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <TableHead className="hidden w-[20%] text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:table-cell">
                 Department
               </TableHead>
-              <TableHead className="w-[12%] text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <TableHead className="hidden w-[12%] text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground md:table-cell">
                 Semesters
               </TableHead>
               
@@ -394,10 +398,10 @@ export default function CourseListPage() {
                       {course.Level}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-center text-muted-foreground">
+                  <TableCell className="hidden text-center text-muted-foreground sm:table-cell">
                     {course.DepartmentName}
                   </TableCell>
-                  <TableCell className="text-center text-muted-foreground">
+                  <TableCell className="hidden text-center text-muted-foreground md:table-cell">
                     {course.TotalSemester}
                   </TableCell>
                   
@@ -405,11 +409,12 @@ export default function CourseListPage() {
               ))
             )}
           </TableBody>
-        </Table>
+          </Table>
+        </div>
 
         {/* Pagination footer */}
         {!isLoading && filteredCourses.length > 0 && (
-          <div className="flex items-center justify-between border-t px-4 py-3">
+          <div className="flex flex-col gap-3 border-t px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-muted-foreground">
               Showing{" "}
               <span className="font-medium text-foreground">
@@ -426,7 +431,7 @@ export default function CourseListPage() {
               results
             </p>
 
-            <div className="flex items-center gap-1">
+            <div className="flex flex-wrap items-center gap-1">
               <Button
                 variant="outline"
                 size="icon-sm"

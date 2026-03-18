@@ -307,7 +307,7 @@ export default function SubjectPage() {
   return (
     <div className="mx-auto w-full space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
             Subject Repository
@@ -316,14 +316,14 @@ export default function SubjectPage() {
             Manage and view all academic subjects available in the curriculum.
           </p>
         </div>
-        <Button className="gap-2" onClick={() => setIsDialogOpen(true)}>
+        <Button className="gap-2 sm:self-auto" onClick={() => setIsDialogOpen(true)}>
           <Plus className="size-4" />
           Create New Subject
         </Button>
       </div>
 
       {/* Search + Filters */}
-      <div className="flex flex-wrap items-end gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
         {/* Search by name or keyword */}
         <div className="flex-1 min-w-[200px] space-y-1.5">
           <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -343,12 +343,12 @@ export default function SubjectPage() {
 
 
         {/* Course filter */}
-        <div className="space-y-1.5">
+        <div className="w-full space-y-1.5 sm:w-auto">
           <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
             Course
           </label>
           <Select value={selectedCourse} onValueChange={handleCourseChange}>
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-full sm:w-[200px]">
               <SelectValue placeholder="All Courses" />
             </SelectTrigger>
             <SelectContent>
@@ -378,7 +378,8 @@ export default function SubjectPage() {
 
       {/* Subject table */}
       <div className="rounded-lg border bg-card">
-        <Table className="table-fixed">
+        <div className="w-full overflow-x-auto">
+          <Table className="min-w-[880px] table-fixed">
           <TableHeader>
             <TableRow className="hover:bg-transparent">
               <TableHead className="w-[17%] text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -387,16 +388,16 @@ export default function SubjectPage() {
               <TableHead className="w-[29%] text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Subject Name
               </TableHead>
-              <TableHead className="w-[20%] text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <TableHead className="hidden w-[20%] text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:table-cell">
                 Course Assigned
               </TableHead>
-              <TableHead className="w-[20%] text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <TableHead className="hidden w-[20%] text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground md:table-cell">
                 Lecturers
               </TableHead>
-              <TableHead className="w-[15%] text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <TableHead className="hidden w-[15%] text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:table-cell">
                 Duration
               </TableHead>
-              <TableHead className="w-[12%] text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <TableHead className="hidden w-[12%] text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:table-cell">
                 Semester
               </TableHead>
 
@@ -440,7 +441,7 @@ export default function SubjectPage() {
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-center">
+                  <TableCell className="hidden text-center sm:table-cell">
                     <div className="flex items-center justify-center gap-3">
                     <Badge
                       variant="secondary"
@@ -450,7 +451,7 @@ export default function SubjectPage() {
                       </Badge>
                     </div>
                   </TableCell>
-                  <TableCell className="text-center">
+                  <TableCell className="hidden text-center md:table-cell">
                     <div className="flex flex-wrap items-center justify-center gap-1">
                       {subject.LecturerCodes.length === 0 ? (
                         <span className="text-xs text-muted-foreground">-</span>
@@ -467,12 +468,12 @@ export default function SubjectPage() {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="text-center text-muted-foreground">
+                  <TableCell className="hidden text-center text-muted-foreground lg:table-cell">
                     <div className="flex items-center justify-center gap-3">
                       {formatDuration(subject.Duration)}
                     </div>
                   </TableCell>
-                  <TableCell className="text-center">
+                  <TableCell className="hidden text-center sm:table-cell">
                     <div className="flex items-center justify-center gap-3">
                       <Badge variant="outline">
                         Sem {subject.Semester}
@@ -484,11 +485,12 @@ export default function SubjectPage() {
               ))
             )}
           </TableBody>
-        </Table>
+          </Table>
+        </div>
 
         {/* Pagination footer */}
         {!isLoading && filteredSubjects.length > 0 && (
-          <div className="flex items-center justify-between border-t px-4 py-3">
+          <div className="flex flex-col gap-3 border-t px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-muted-foreground">
               Showing{" "}
               <span className="font-medium text-foreground">
@@ -508,7 +510,7 @@ export default function SubjectPage() {
               results
             </p>
 
-            <div className="flex items-center gap-1">
+            <div className="flex flex-wrap items-center gap-1">
               <Button
                 variant="outline"
                 size="icon-sm"

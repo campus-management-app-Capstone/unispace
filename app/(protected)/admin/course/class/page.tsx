@@ -15,10 +15,10 @@ import type { TablesInsert } from '@/types/supabase';
  * Props for the server-rendered class repository page.
  */
 interface ClassPageProps {
-  searchParams: {
+  searchParams: Promise<{
     q?: string;
     type?: string;
-  };
+  }>;
 }
 
 /**
@@ -101,6 +101,8 @@ function filterClasses(
  * ClassPage renders the admin class repository for managing all class sessions.
  */
 const ClassPage = async ({ searchParams }: ClassPageProps) => {
+  const { q, type } = await searchParams;
+
   const [classes, supabase] = await Promise.all([
     getAllClassesWithDetails(),
     createServerSupabaseClient(),
@@ -119,8 +121,8 @@ const ClassPage = async ({ searchParams }: ClassPageProps) => {
 
   const filteredClasses = filterClasses(
     classes,
-    searchParams.q,
-    searchParams.type
+    q,
+    type
   );
 
   return (
@@ -151,7 +153,7 @@ const ClassPage = async ({ searchParams }: ClassPageProps) => {
             <input
               type="text"
               name="q"
-              defaultValue={searchParams.q || ''}
+              defaultValue={q || ''}
               placeholder="Search by class ID or subject name..."
               className="h-9 w-full rounded-md border border-gray-300 px-3 text-sm focus:border-black focus:outline-none"
             />
@@ -160,7 +162,7 @@ const ClassPage = async ({ searchParams }: ClassPageProps) => {
           <div className="flex flex-wrap gap-3">
             <select
               name="type"
-              defaultValue={searchParams.type || ''}
+              defaultValue={type || ''}
               className="h-9 rounded-md border border-gray-300 px-3 text-sm focus:border-black focus:outline-none"
             >
               <option value="">All Types</option>

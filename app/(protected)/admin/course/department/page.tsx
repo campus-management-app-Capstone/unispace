@@ -72,9 +72,7 @@ export default async function DepartmentPage() {
               <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Courses
               </TableHead>
-              <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Actions
-              </TableHead>
+              
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -109,24 +107,7 @@ export default async function DepartmentPage() {
                       </Link>
                     </TableCell>
 
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label="Edit department"
-                        >
-                          <Pencil className="size-4 text-muted-foreground" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label="Delete department"
-                        >
-                          <Trash2 className="size-4 text-muted-foreground" />
-                        </Button>
-                      </div>
-                    </TableCell>
+                    
                   </TableRow>
                 );
               })
