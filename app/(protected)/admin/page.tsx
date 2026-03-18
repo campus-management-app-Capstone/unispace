@@ -17,9 +17,5 @@ export default async function Admin() {
         redirect("/home");
     }
 
-    return (
-        <div className="flex h-screen w-full items-center justify-center">
-            
-        </div>
-    );
+    redirect("/admin/home");
 }

@@ -24,7 +24,8 @@ const LecturerMorePage = () => {
     Icon: React.ComponentType<{ className?: string }>;
   }[] = [
     { key: 'map', label: 'Map', href: '/map', Icon: MapPinned },
-    { key: 'form', label: 'Form', href: '#', Icon: FileText },
+    { key: 'form', label: 'Form', href: '/evaluation', Icon: FileText },
+    { key: 'helpdesk', label: 'Helpdesk', href: '/help', Icon: LifeBuoy },
     {
       key: 'announcement',
       label: 'Announcement',

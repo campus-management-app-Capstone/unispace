@@ -27,7 +27,7 @@ export default clerkMiddleware(async (auth, req) => {
   // check is admin
   if (!isAdminRoute(req) && userRole === 'admin' && !isPublicRoute(req) && !apiRoute(req)) {
     // is a admin, not allow to access other than admin page
-    const redirectUrl = new URL('/admin', req.url); // redirect to admin page
+    const redirectUrl = new URL('/admin/home', req.url); // redirect to admin home page
     return NextResponse.redirect(redirectUrl);
   }
 
