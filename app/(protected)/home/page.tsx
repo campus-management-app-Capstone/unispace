@@ -25,7 +25,6 @@ interface AnnouncementSummaryRow {
   Target: string;
 }
 
-/** Build a friendly name for the Clerk user. */
 function getDisplayName(user: Awaited<ReturnType<typeof currentUser>>) {
   return (
     user?.fullName ||
@@ -35,7 +34,6 @@ function getDisplayName(user: Awaited<ReturnType<typeof currentUser>>) {
   );
 }
 
-/** Format an ISO date to a compact, readable label. */
 function formatAnnouncementDate(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
