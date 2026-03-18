@@ -78,7 +78,9 @@ export default function AddAdminPage() {
       toast.success(`Admin created. Email: ${result.email}. AdminCode: ${result.adminCode}`);
       router.push("/admin/adminmanagement");
     } catch (err) {
-      console.error(err);
+      if (!(err instanceof Error) || !err.message.toLowerCase().includes("email already exists")) {
+        console.error(err);
+      }
       toast.error(err instanceof Error ? err.message : "Failed to create admin");
     } finally {
       setLoading(false);

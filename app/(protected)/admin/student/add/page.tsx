@@ -220,12 +220,14 @@ StudentCode: ${result.studentCode}`
 router.push('/admin/student');
 
 } catch (error) {
-console.error(error);
+if (!(error instanceof Error) || !error.message.toLowerCase().includes("email already exists")) {
+  console.error(error);
+}
 
 toast.error(
-error instanceof Error
-? error.message
-: 'Failed to create student'
+  error instanceof Error
+    ? error.message
+    : 'Failed to create student'
 );
 } finally {
 setLoading(false);

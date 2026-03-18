@@ -26,7 +26,7 @@ import {
   Wallet,
   Car,
   MapPin,
-  HelpCircle
+  HelpCircle,
 } from "lucide-react";
 import {
   NavigationMenu,
@@ -56,6 +56,11 @@ import { cn } from "@/lib/utils";
 /** Top-level admin navigation items (direct links without sub-menus) */
 const studentNavItems = [
   { 
+    label: "Home", 
+    href: "/home", 
+    icon: Users, 
+  },
+  { 
     label: "Timetable", 
     href: "/student/timetable", 
     icon: Calendar, 
@@ -66,18 +71,13 @@ const studentNavItems = [
     icon: GraduationCap, 
   },
   { 
-    label: "Home", 
-    href: "/home", 
-    icon: Users, 
-  },
-  { 
     label: "Wallet", 
     href: "/wallet", 
     icon: Wallet, 
   },
   { 
     label: "Map", 
-    href: "/Map", 
+    href: "/map", 
     icon: MapPin, 
   },
   { 
@@ -85,16 +85,21 @@ const studentNavItems = [
     href: "/parking", 
     icon: Car, 
   },
+  {
+    label: "Facility",
+    href: "/facility",
+    icon: School
+  },
   { 
-    label: "More", 
-    href: "/student/more", 
-    icon: ClipboardList, 
+    label: "Announcement", 
+    href: "/announcement", 
+    icon: Megaphone, 
   },
   {
     label: "Help Centre",
     href: "/help",
     icon: HelpCircle,
-  },
+  }
 ] as const;
 
 /**

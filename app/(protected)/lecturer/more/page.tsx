@@ -32,6 +32,7 @@ const LecturerMorePage = () => {
       href: '/announcement',
       Icon: Megaphone,
     },
+    { key: 'helpdesk', label: 'Helpdesk', href: '/lecturer/help', Icon: LifeBuoy },
     { key: 'wallet', label: 'Wallet', href: '/wallet', Icon: Wallet },
     { key: 'parking', label: 'Parking', href: '/parking', Icon: ParkingCircle },
     { key: 'profile', label: 'Profile', href: '/home', Icon: User2 },

@@ -33,7 +33,8 @@ export default async function ProtectedLayout({
 
     return (
         <div className="min-h-screen flex flex-col bg-gray-50">
-            {isAdmin ? <AdminNavbar /> : isStudent ? <StudentNavbar /> : isLecturer ? <LecturerNavbar /> : <Navbar />}
+            {/* {isAdmin ? <AdminNavbar /> : isStudent ? <StudentNavbar /> : isLecturer ? <LecturerNavbar /> : <Navbar />} */}
+            {isAdmin ? <AdminNavbar /> : <StudentNavbar /> }
             <main className="flex-1 container mx-auto p-6">
                 {children}
             </main>
