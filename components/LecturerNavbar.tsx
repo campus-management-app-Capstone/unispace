@@ -25,7 +25,8 @@ import {
   ChartBar,
   Wallet,
   Car,
-  MapPin
+  MapPin,
+  HelpCircle
 } from "lucide-react";
 import {
   NavigationMenu,
@@ -54,41 +55,51 @@ import { cn } from "@/lib/utils";
 
 /** Top-level admin navigation items (direct links without sub-menus) */
 const studentNavItems = [
-  { 
-    label: "Timetable", 
-    href: "/lecturer/timetable", 
-    icon: Calendar, 
+  {
+    label: "Home",
+    href: "/home",
+    icon: Users,
   },
-  { 
-    label: "Attendance", 
-    href: "/lecturer/attendance", 
-    icon: GraduationCap, 
+  {
+    label: "Timetable",
+    href: "/lecturer/timetable",
+    icon: Calendar,
   },
-  { 
-    label: "Home", 
-    href: "/home", 
-    icon: Users, 
+  {
+    label: "Attendance",
+    href: "/lecturer/attendance",
+    icon: GraduationCap,
   },
-  { 
-    label: "Wallet", 
-    href: "/wallet", 
-    icon: Wallet, 
+  {
+    label: "Wallet",
+    href: "/wallet",
+    icon: Wallet,
   },
-  { 
-    label: "Map", 
-    href: "/map", 
-    icon: MapPin, 
+  {
+    label: "Map",
+    href: "/map",
+    icon: MapPin,
   },
-  { 
-    label: "Parking", 
-    href: "/parking", 
-    icon: Car, 
+  {
+    label: "Parking",
+    href: "/parking",
+    icon: Car,
   },
-  { 
-    label: "More", 
-    href: "/lecturer/more", 
-    icon: ClipboardList, 
+  {
+    label: "Facility",
+    href: "/facility",
+    icon: School
   },
+  {
+    label: "Announcement",
+    href: "/announcement",
+    icon: Megaphone,
+  },
+  {
+    label: "Help Centre",
+    href: "/help",
+    icon: HelpCircle,
+  }
 ] as const;
 
 /**
@@ -114,7 +125,7 @@ export default function AdminNavbar() {
         {/* desktop dropdown navigation menu — hidden on mobile */}
         <NavigationMenu className="hidden md:flex">
           <NavigationMenuList>
-            
+
 
             {/* link to admin page */}
             {studentNavItems.map(({ label, href, icon: Icon }) => (
@@ -183,7 +194,7 @@ export default function AdminNavbar() {
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <div className="ml-4 mt-1 flex flex-col gap-0.5 border-l pl-3">
-                  
+
                 </div>
               </CollapsibleContent>
             </Collapsible>
