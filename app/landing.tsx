@@ -1,34 +1,9 @@
 import React from 'react'
-import Image from 'next/image'
-import { Link } from 'lucide-react'
-import { SignIn } from '@clerk/nextjs'
-import { ArrowRight, PlayCircle, Star, Menu, X, Facebook, Twitter, Instagram } from 'lucide-react'
+import Link from 'next/link'
 
 export default function Landing() {
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
-          <div className="flex items-center gap-4">
-              <img alt="UniSpace Logo" className="h-8 w-auto" data-alt="UniSpace minimalist university logo" src="favicon.ico"/>
-              <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white uppercase">UniSpace</h2>
-      </div>
-    <nav className="hidden md:flex items-center gap-8">
-<a className="text-sm font-medium hover:text-primary transition-colors" href="#">Home</a>
-<a className="text-sm font-medium hover:text-primary transition-colors" href="#">Courses</a>
-<a className="text-sm font-medium hover:text-primary transition-colors" href="#">Campus Life</a>
-<a className="text-sm font-medium hover:text-primary transition-colors" href="#">Support</a>
-</nav>
-<div className="flex items-center gap-4">
-<button className="hidden sm:block text-sm font-semibold px-4 py-2 text-slate-700 dark:text-slate-300">Log In</button>
-<button className="bg-primary text-white text-sm font-bold py-2 px-6 rounded-xl hover:opacity-90 transition-all shadow-lg shadow-primary/20">
-                        Sign Up
-                    </button>
-</div>
-</div>
-</div>
-</header>
-    <div className='flex-col'>
+    <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
@@ -36,23 +11,25 @@ export default function Landing() {
               
             </div>
             <nav className="hidden md:flex items-center gap-8">
-              <a className="text-sm font-medium hover:text-primary transition-colors" href="#">Home</a>
-              <a className="text-sm font-medium hover:text-primary transition-colors" href="#">Courses</a>
-              <a className="text-sm font-medium hover:text-primary transition-colors" href="#">Campus Life</a>
-              <a className="text-sm font-medium hover:text-primary transition-colors" href="#">Support</a>
+              <a className="text-sm font-medium hover:text-primary transition-colors" href="#home">Home</a>
+              <a className="text-sm font-medium hover:text-primary transition-colors" href="#courses">Courses</a>
+              <a className="text-sm font-medium hover:text-primary transition-colors" href="#campus-life">Campus Life</a>
+              <a className="text-sm font-medium hover:text-primary transition-colors" href="#support">Support</a>
             </nav>
             <div className="flex items-center gap-4">
-              {/* <button className="hidden sm:block text-sm font-semibold px-4 py-2 text-slate-700 dark:text-slate-300">Log In</button> */}
-              <Link href="/sign-in" className='hidden sm:block text-sm font-semibold px-4 py-2 text-slate-700 dark:text-slate-300'>
-                <SignIn />
+              <Link
+                href="/sign-in"
+                className="hidden rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800 sm:block"
+              >
+                Sign In
               </Link>
             </div>
           </div>
         </div>
       </header>
-      <main className=''>
+      <main className="flex flex-col">
 
-        <section className="relative overflow-hidden pt-16 pb-20 lg:pt-24 lg:pb-32">
+        <section id="home" className="relative overflow-hidden pt-16 pb-20 lg:pt-24 lg:pb-32">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col lg:flex-row items-center gap-12">
               <div className="flex-1 space-y-8 text-center lg:text-left">
@@ -68,7 +45,7 @@ export default function Landing() {
                 <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
                   
                   <button className="w-full sm:w-auto flex items-center justify-center gap-2 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 text-base font-bold py-4 px-10 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all">
-                    <span className="material-symbols-outlined">play_circle</span>
+                    <span className="material-symbols-outlined"></span>
                     Explore Campus
                   </button>
                 </div>
@@ -82,7 +59,7 @@ export default function Landing() {
             </div>
           </div>
         </section>
-        <section className="py-20 bg-slate-50 dark:bg-background-dark/50">
+        <section id="courses" className="py-20 bg-slate-50 dark:bg-background-dark/50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
               <h2 className="text-3xl font-black text-slate-900 dark:text-white sm:text-4xl">Core Features</h2>
@@ -92,21 +69,21 @@ export default function Landing() {
 
               <div className="group p-8 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-xl transition-all hover:-translate-y-1">
                 <div className="w-14 h-14 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-6 group-hover:bg-primary group-hover:text-white transition-colors">
-                  <span className="material-symbols-outlined text-3xl">book_4</span>
+                  <span className="material-symbols-outlined text-3xl"></span>
                 </div>
                 <h3 className="text-xl font-bold mb-3 text-slate-900 dark:text-white">Course Management</h3>
                 <p className="text-slate-600 dark:text-slate-400">Easily track your modules, assignments, and grades in real-time with automated scheduling and alerts.</p>
               </div>
               <div className="group p-8 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-xl transition-all hover:-translate-y-1">
                 <div className="w-14 h-14 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-6 group-hover:bg-primary group-hover:text-white transition-colors">
-                  <span className="material-symbols-outlined text-3xl">newspaper</span>
+                  <span className="material-symbols-outlined text-3xl"></span>
                 </div>
                 <h3 className="text-xl font-bold mb-3 text-slate-900 dark:text-white">Campus News</h3>
                 <p className="text-slate-600 dark:text-slate-400">Stay informed with the latest happenings, official announcements, and student-led initiatives around campus.</p>
               </div>
               <div className="group p-8 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-xl transition-all hover:-translate-y-1">
                 <div className="w-14 h-14 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-6 group-hover:bg-primary group-hover:text-white transition-colors">
-                  <span className="material-symbols-outlined text-3xl">support_agent</span>
+                  <span className="material-symbols-outlined text-3xl"></span>
                 </div>
                 <h3 className="text-xl font-bold mb-3 text-slate-900 dark:text-white">Student Support</h3>
                 <p className="text-slate-600 dark:text-slate-400">Access dedicated resources, mental health advocacy, and academic counseling services whenever you need them.</p>
@@ -114,7 +91,7 @@ export default function Landing() {
             </div>
           </div>
         </section>
-        <section className="py-20">
+        <section id="campus-life" className="py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-end justify-between mb-12">
               <div className="space-y-4">
@@ -153,21 +130,21 @@ export default function Landing() {
             </div>
           </div>
         </section>
-        <section className="py-20 bg-primary/5">
+        <section id="support" className="py-20 bg-primary/5">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto mb-16">
               <h2 className="text-3xl font-black text-slate-900 dark:text-white sm:text-4xl">What Our Students Say</h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
-                <div className="flex gap-1 text-primary mb-4">
+                {/* <div className="flex gap-1 text-primary mb-4">
                   <span className="material-symbols-outlined fill-1">star</span>
                   <span className="material-symbols-outlined fill-1">star</span>
                   <span className="material-symbols-outlined fill-1">star</span>
                   <span className="material-symbols-outlined fill-1">star</span>
                   <span className="material-symbols-outlined fill-1">star</span>
-                </div>
-                <p className="text-slate-700 dark:text-slate-300 italic mb-6">"UniSpace completely transformed how I manage my studies. Having everything in one app is a game changer for my productivity."</p>
+                </div> */}
+                <p className="text-slate-700 dark:text-slate-300 italic mb-6">&quot;UniSpace completely transformed how I manage my studies. Having everything in one app is a game changer for my productivity.&quot;</p>
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-full bg-slate-200" data-alt="Student profile photo" ></div>
                   <div>
@@ -177,14 +154,14 @@ export default function Landing() {
                 </div>
               </div>
               <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
-                <div className="flex gap-1 text-primary mb-4">
+                {/* <div className="flex gap-1 text-primary mb-4">
                   <span className="material-symbols-outlined fill-1">star</span>
                   <span className="material-symbols-outlined fill-1">star</span>
                   <span className="material-symbols-outlined fill-1">star</span>
                   <span className="material-symbols-outlined fill-1">star</span>
                   <span className="material-symbols-outlined fill-1">star</span>
-                </div>
-                <p className="text-slate-700 dark:text-slate-300 italic mb-6">"The support section helped me find a mentor when I was struggling with my thesis. I feel more connected to the university than ever."</p>
+                </div> */}
+                <p className="text-slate-700 dark:text-slate-300 italic mb-6">&quot;The support section helped me find a mentor when I was struggling with my thesis. I feel more connected to the university than ever.&quot;</p>
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-full bg-slate-200" data-alt="Student profile photo" ></div>
                   <div>
@@ -194,14 +171,14 @@ export default function Landing() {
                 </div>
               </div>
               <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
-                <div className="flex gap-1 text-primary mb-4">
+                {/* <div className="flex gap-1 text-primary mb-4">
                   <span className="material-symbols-outlined fill-1">star</span>
                   <span className="material-symbols-outlined fill-1">star</span>
                   <span className="material-symbols-outlined fill-1">star</span>
                   <span className="material-symbols-outlined fill-1">star</span>
                   <span className="material-symbols-outlined fill-1">star_half</span>
-                </div>
-                <p className="text-slate-700 dark:text-slate-300 italic mb-6">"I never miss a campus event now. The notifications for news and festivals are timely and actually useful for social life."</p>
+                </div> */}
+                <p className="text-slate-700 dark:text-slate-300 italic mb-6">&quot;I never miss a campus event now. The notifications for news and festivals are timely and actually useful for social life.&quot;</p>
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-full bg-slate-200" data-alt="Student profile photo" ></div>
                   <div>

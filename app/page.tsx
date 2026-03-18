@@ -1,7 +1,5 @@
 import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import Landing from "./landing";
 
 export default async function LandingPage() {
@@ -17,7 +15,7 @@ export default async function LandingPage() {
   }
 
   return (
-    <div className="flex h-screen w-full items-center justify-center">
+    <div className="w-full">
       {/* <Link href="/sign-in">
         <Button>Sign In</Button>
       </Link> */}
