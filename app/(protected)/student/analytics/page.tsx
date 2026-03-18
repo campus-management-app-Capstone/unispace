@@ -1,174 +1,248 @@
-"use client";
+import React, { Key, ReactNode } from "react";
+import Link from "next/link";
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
+import { createServerSupabaseClient } from "@/lib/supabase";
+import { getStudentAttendanceOverview } from "@/lib/database";
 
-export default function StudentAnalyticsPage() {
+interface StudentTimetableSlot {
+  id: string;
+  classId: string | null;
+  subjectName: string | null;
+  time: string;
+  venue: string | null;
+  lecturer: string | null;
+  day: string | null;
+  start: string | null;
+  end: string | null;
+}
+
+function mapToStudentSlots(rows: unknown[]): StudentTimetableSlot[] {
+  return (rows || []).map((r) => {
+    const row = r as any;
+    const cls = row.Class ?? null;
+    const start = row.Start ?? "";
+    const end = row.End ?? "";
+    return {
+      id: row.TimetableSlotID,
+      classId: cls?.ClassID ?? null,
+      subjectName: cls?.Subject?.Name ?? null,
+      time: start && end ? `${start} – ${end}` : start || end || "—",
+      venue: row.Facility?.Name ?? null,
+      lecturer: cls?.Lecturer?.LecturerCode ?? null,
+      day: row.Day,
+      start: row.Start,
+      end: row.End,
+    };
+  });
+}
+
+export default async function StudentDashboardPage() {
+  const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
+
+  const supabase = createServerSupabaseClient();
+
+  // Fetch student record
+  const { data: student } = await supabase
+    .from("Student")
+    .select("StudentID")
+    .eq("UserID", userId)
+    .maybeSingle();
+
+  if (!student) redirect("/sign-in");
+  const studentId = student.StudentID;
+
+  // Attendance overview
+  const attendanceOverview = await getStudentAttendanceOverview(studentId);
+
+  // Wallet & monthly spending
+  const { data: walletData } = await supabase
+    .from("Wallet")
+    .select("*")
+    .eq("UserID", userId)
+    .maybeSingle();
+
+  const { data: transactions } = await supabase
+    .from("Transaction")
+    .select("*")
+    .eq("WalletID", walletData?.WalletID);
+
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+
+  const monthlySpending =
+    transactions
+      ?.filter((tx) => {
+        const d = new Date(tx.Time);
+        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+      })
+      .reduce((sum, tx) => sum + tx.Amount, 0) ?? 0;
+
+  // Facility bookings
+  const { data: bookingsData } = await supabase
+    .from("Booking")
+    .select("StartTime, EndTime, Facility(Name)")
+    .eq("UserID", userId);
+  const totalBookings = bookingsData?.length ?? 0;
+
+  // Current semester subjects (no duplicates)
+  const { data: enrollments } = await supabase
+    .from("Enrollment")
+    .select("EnrollmentID")
+    .eq("StudentID", studentId);
+
+  const enrollmentIds = (enrollments ?? []).map((e) => e.EnrollmentID);
+  let currentSemesterSubjects: string[] = [];
+
+  if (enrollmentIds.length > 0) {
+    const { data: classRegs } = await supabase
+      .from("ClassRegistration")
+      .select("ClassID")
+      .in("EnrollmentID", enrollmentIds);
+
+    const classIds = (classRegs ?? []).map((c) => c.ClassID).filter(Boolean);
+
+    if (classIds.length > 0) {
+      const { data: classes } = await supabase
+        .from("Class")
+        .select("Subject(Name)")
+        .in("ClassID", classIds);
+
+      currentSemesterSubjects = Array.from(
+        new Set((classes ?? []).map((c) => c.Subject?.Name).filter(Boolean))
+      );
+    }
+  }
+
+  //Upcoming classes (today only)
+let upcomingSlots: StudentTimetableSlot & {
+  id: Key | null | undefined;
+  subjectName: ReactNode;
+  venue: string;
+  time: ReactNode; dayName: string 
+}[] = [];
+
+if (enrollmentIds.length > 0) {
+  const { data: classRegs } = await supabase
+    .from("ClassRegistration")
+    .select("ClassID")
+    .in("EnrollmentID", enrollmentIds);
+
+  const classIds = Array.from(
+    new Set((classRegs ?? []).map((r) => r.ClassID).filter(Boolean))
+  ) as string[];
+
+  if (classIds.length > 0) {
+    const { data: slotRows } = await supabase
+      .from("TimetableSlot")
+      .select(`
+        TimetableSlotID,
+        Day,
+        Start,
+        End,
+        Facility(Name),
+        Class(
+          ClassID,
+          Subject(Name),
+          Lecturer(LecturerCode)
+        )
+      `)
+      .in("ClassID", classIds)
+      .order("Day", { ascending: true })
+      .order("Start", { ascending: true });
+
+    const allSlots = mapToStudentSlots(slotRows ?? []);
+    const nowTime = new Date();
+    const todayStr = nowTime.toLocaleDateString("en-CA"); // yyyy-mm-dd
+
+    // Day mapping
+    const fullDayMap: Record<string, string> = {
+      Mon: "Monday",
+      Tue: "Tuesday",
+      Wed: "Wednesday",
+      Thu: "Thursday",
+      Fri: "Friday",
+      Sat: "Saturday",
+      Sun: "Sunday",
+    };
+
+      upcomingSlots = allSlots
+    .filter(slot => {
+      if (!slot.start || !slot.day) return false;
+
+      const [hours, minutes] = slot.start.split(":").map(Number);
+      const slotDate = new Date(nowTime.getFullYear(), nowTime.getMonth(), nowTime.getDate(), hours, minutes, 0, 0);
+
+      // Only today & after now
+      return slotDate >= nowTime;
+    })
+    .map(slot => ({
+      ...slot,
+      dayName: slot.day ? fullDayMap[slot.day.slice(0, 3)] ?? slot.day : "—"
+    }));
+  }
+}
+
   return (
-    <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100">
+    <div className="max-w-6xl mx-auto p-6 grid md:grid-cols-4 gap-6">
+      {/* Attendance */}
+      <div className="rounded-2xl border p-6 text-center shadow-sm bg-white">
+        <h2 className="text-lg font-semibold text-gray-700 mb-2">Overall Attendance</h2>
+        <p className="text-4xl font-bold text-green-600">{attendanceOverview?.overallIntakeAttendance ?? 0}%</p>
+      </div>
 
-      {/* Sidebar */}
-      <aside className="w-64 flex-shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-background-dark/50 flex flex-col justify-between p-4">
+      {/* Wallet */}
+      <div className="rounded-2xl border p-6 text-center shadow-sm bg-white">
+        <h2 className="text-lg font-semibold text-gray-700 mb-2">Wallet Balance</h2>
+        <p className="text-4xl font-bold text-blue-600">RM {walletData?.Balance?.toFixed(2) ?? "0.00"}</p>
+      </div>
 
-        <div className="flex flex-col gap-8">
+      {/* Monthly Spending */}
+      <div className="rounded-2xl border p-6 text-center shadow-sm bg-white">
+        <h2 className="text-lg font-semibold text-gray-700 mb-2">Spending This Month</h2>
+        <p className="text-4xl font-bold text-red-600">RM {monthlySpending.toFixed(2)}</p>
+      </div>
 
-          {/* Logo */}
-          <div className="flex items-center gap-3 px-2">
-            <div className="size-10 bg-primary rounded-xl flex items-center justify-center text-white">
-              <span className="material-symbols-outlined">analytics</span>
-            </div>
-            <h2 className="text-xl font-bold tracking-tight text-primary">
-              EduPulse
-            </h2>
-          </div>
+      {/* Facility Bookings */}
+      <div className="rounded-2xl border p-6 text-center shadow-sm bg-white">
+        <h2 className="text-lg font-semibold text-gray-700 mb-2">Facility Bookings</h2>
+        <p className="text-4xl font-bold text-purple-600">{totalBookings}</p>
+      </div>
 
-          {/* Navigation */}
-          <nav className="flex flex-col gap-1">
+      {/* Current Semester Subjects */}
+      <div className="rounded-2xl border p-6 shadow-sm bg-white md:col-span-2">
+        <h2 className="text-lg font-semibold text-gray-700 mb-4">Current Semester Subjects</h2>
+        {currentSemesterSubjects.length === 0 ? (
+          <p className="text-gray-500">No subjects found for the current semester.</p>
+        ) : (
+          <ul className="list-disc list-inside space-y-1">
+            {currentSemesterSubjects.map((subj) => (
+              <li key={subj} className="text-gray-800">{subj}</li>
+            ))}
+          </ul>
+        )}
+      </div>
 
-            <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-primary text-white">
-              <span className="material-symbols-outlined">dashboard</span>
-              <p className="text-sm font-semibold">Dashboard</p>
-            </div>
-
-            <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600">
-              <span className="material-symbols-outlined">book_2</span>
-              <p className="text-sm font-medium">Courses</p>
-            </div>
-
-            <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600">
-              <span className="material-symbols-outlined">school</span>
-              <p className="text-sm font-medium">Grades</p>
-            </div>
-
-            <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600">
-              <span className="material-symbols-outlined">fact_check</span>
-              <p className="text-sm font-medium">Attendance</p>
-            </div>
-
-            <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600">
-              <span className="material-symbols-outlined">calendar_month</span>
-              <p className="text-sm font-medium">Schedule</p>
-            </div>
-
-          </nav>
-        </div>
-
-        {/* Profile */}
-        <div className="p-2">
-          <div className="flex items-center gap-3 p-3 bg-slate-100 dark:bg-slate-800/50 rounded-xl">
-
-            <div
-              className="size-10 rounded-full bg-cover bg-center border-2 border-primary/20"
-              style={{
-                backgroundImage:
-                  "url(https://lh3.googleusercontent.com/aida-public/AB6AXuA9sfVhPhRxT_ZjYBswkhwNtU0BHdz-d9VfFONLkZv3gicW8gHyKiBSwcYj2ykE8KlifNBACJA3o0jrhICIrsUApSORmZQNabrabxQ4l12K1RqZV18ubxhSZjnTFkHM382Li74ofgwG0RHTStSU9el2CpO9lKxBZMPXH-fdChW8hwZnrZDf8JKVxfRCD-QF5wAdQce3RcF_dBmO0PyeI6VlulHXzxQPRxqojynqxiWX9c3bj6GJmEgCjlkkvwPQn8NWarc8T_i3a-4)"
-              }}
-            />
-
-            <div className="flex flex-col overflow-hidden">
-              <h1 className="text-sm font-bold truncate">Alex Johnson</h1>
-              <p className="text-xs text-slate-500 truncate">
-                Computer Science Senior
+      {/* Upcoming Classes */}
+      <div className="rounded-2xl border p-6 shadow-sm bg-white md:col-span-2">
+        <h2 className="text-lg font-semibold text-gray-700 mb-4">
+          Upcoming Classes (Today)
+        </h2>
+        {upcomingSlots.length === 0 ? (
+          <p className="text-gray-500">No more classes scheduled for today.</p>
+        ) : (
+          upcomingSlots.map(slot => (
+            <div key={slot.id} className="border rounded-lg p-3 mb-2">
+              <p className="font-semibold">{slot.subjectName}</p>
+              <p className="text-sm text-gray-600">
+                {slot.dayName} — {slot.time} @ {slot.venue ?? "—"}
               </p>
             </div>
-
-          </div>
-        </div>
-
-      </aside>
-
-      {/* Main Area */}
-      <main className="flex-1 flex flex-col overflow-y-auto">
-
-        {/* Header */}
-        <header className="h-16 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md px-8 flex items-center justify-between">
-
-          <div className="relative w-full max-w-md">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-              search
-            </span>
-
-            <input
-              type="text"
-              placeholder="Search analytics, courses..."
-              className="w-full bg-slate-100 dark:bg-slate-800 rounded-xl pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-primary/50"
-            />
-          </div>
-
-          <div className="flex items-center gap-3">
-
-            <button className="size-10 flex items-center justify-center rounded-xl hover:bg-slate-100">
-              <span className="material-symbols-outlined">
-                notifications
-              </span>
-            </button>
-
-            <button className="size-10 flex items-center justify-center rounded-xl hover:bg-slate-100">
-              <span className="material-symbols-outlined">
-                settings
-              </span>
-            </button>
-
-            <div className="size-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold">
-              AJ
-            </div>
-
-          </div>
-
-        </header>
-
-        {/* Content */}
-        <div className="p-8 flex flex-col gap-8 max-w-[1400px] mx-auto w-full">
-
-          <div>
-            <h1 className="text-3xl font-black tracking-tight mb-2">
-              Academic Overview
-            </h1>
-            <p className="text-slate-500">
-              Welcome back, Alex. Here's what's happening with your studies
-              this week.
-            </p>
-          </div>
-
-          {/* Cards */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-            {/* CGPA */}
-            <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
-
-              <p className="text-sm font-semibold text-slate-500 uppercase">
-                Overall CGPA
-              </p>
-
-              <h2 className="text-4xl font-black mt-1">
-                3.85
-                <span className="text-sm text-green-500 ml-2">
-                  +0.12%
-                </span>
-              </h2>
-
-            </div>
-
-            {/* Attendance */}
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 flex flex-col items-center justify-center">
-
-              <p className="text-sm font-semibold text-slate-500 uppercase">
-                Attendance
-              </p>
-
-              <h2 className="text-4xl font-black mt-4">
-                94%
-              </h2>
-
-              <p className="text-xs text-green-500">
-                +2.4%
-              </p>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </main>
-
+          ))
+        )}
+      </div>
     </div>
   );
 }
