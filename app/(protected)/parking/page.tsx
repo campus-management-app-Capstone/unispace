@@ -187,7 +187,7 @@ const page = () => {
                 if (!response.ok && result.error) {
                     console.error("Failed to Pay:", result.error);
                     toast.update(id, {
-                        render: "Failed to Pay",
+                        render: "Failed to Pay. You might not have enough balance.",
                         type: "error",
                         isLoading: false,
                         autoClose: 2000,
@@ -199,7 +199,7 @@ const page = () => {
             } catch (error) {
                 console.error("Failed to Pay:", error);
                 toast.update(id, {
-                    render: "Failed to Pay",
+                    render: "Failed to Pay. You might not have enough balance.",
                     type: "error",
                     isLoading: false,
                     autoClose: 2000,

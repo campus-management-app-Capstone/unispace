@@ -248,6 +248,12 @@ export default function AnnouncementPage() {
   }
 
   const handleDelete = async (id) => {
+    const needDlt = confirm("Are you sure to delete this announcement?");
+
+    if(!needDlt){
+      return;
+    }
+
     console.log("Deleting: " + id);
     // Validation
     if (!id.trim()) {
