@@ -45,9 +45,10 @@ export async function POST(request: NextRequest) {
                 Title: title,
                 Content: content,
                 Target: target,
-                CreatedAt: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+                CreatedAt: new Date()
             }
         ])
+        .select()
         .single();
 
         if (error) {
@@ -62,7 +63,8 @@ export async function POST(request: NextRequest) {
         // success
         return NextResponse.json(
             {
-                success: true
+                success: true,
+                data: data.AnnouncementID
             },
             { status: 201 }
         );
