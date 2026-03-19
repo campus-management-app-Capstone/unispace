@@ -22,7 +22,7 @@ import {
   Blocks,
   UsersRound,
   Calendar,
-  ChartBar,
+  BarChart,
   Wallet,
   Car,
   MapPin,
@@ -96,6 +96,11 @@ const studentNavItems = [
     icon: Megaphone,
   },
   {
+    label: "Analytics",
+    href: "/lecturer/analytics",
+    icon: BarChart,
+  },
+  {
     label: "Help Centre",
     href: "/help",
     icon: HelpCircle,
@@ -122,8 +127,8 @@ export default function AdminNavbar() {
           <Image src="/favicon.ico" alt="UniSpace" width={40} height={40} />
         </Link>
 
-        {/* desktop dropdown navigation menu — hidden on mobile */}
-        <NavigationMenu className="hidden md:flex">
+        {/* Desktop navigation stays visible on laptop and larger screens */}
+        <NavigationMenu className="hidden lg:flex">
           <NavigationMenuList>
 
 
@@ -145,9 +150,10 @@ export default function AdminNavbar() {
           </NavigationMenuList>
         </NavigationMenu>
 
-        {/* hamburger menu + Clerk user button */}
+        {/* Hamburger menu is only shown on tablet and phone widths */}
         <div className="flex items-center gap-2">
           <Button
+            className="lg:hidden"
             variant="ghost"
             size="icon"
             onClick={() => setSidebarOpen(true)}
