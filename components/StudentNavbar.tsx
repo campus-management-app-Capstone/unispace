@@ -91,6 +91,11 @@ const studentNavItems = [
     href: "/facility",
     icon: School
   },
+  {
+    label: "Survey",
+    href: "/survey",
+    icon: FileText
+  },
   { 
     label: "Announcement", 
     href: "/announcement", 
