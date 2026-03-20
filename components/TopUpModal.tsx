@@ -4,6 +4,7 @@ import { X, Wallet, Zap, Lock, Wallet2 } from "lucide-react";
 import { toast } from "react-toastify";
 import { redirect } from "next/dist/server/api-utils";
 import { createTopUpSession } from "@/lib/wallet/wallet-actions"; 
+import { createPortal } from "react-dom";
 
 // top up pop up when user click top up button
 export const TopupButton = ({ currentBalance }) => {
@@ -49,8 +50,8 @@ export const TopupButton = ({ currentBalance }) => {
                 Top up
             </Button>
 
-            {showModal ? (
-                <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+            {showModal ? createPortal(
+                <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
 
                     <div className="relative w-full max-w-[480px] bg-white dark:bg-slate-900 rounded-xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200">
 
@@ -160,7 +161,7 @@ export const TopupButton = ({ currentBalance }) => {
                         </div>
 
                     </div>
-                </div>
+                </div>, document.body
             ) : null}
         </div>
     );
