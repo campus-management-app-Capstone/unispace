@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { ArrowUpRight, Building2, GraduationCap } from "lucide-react";
+import { AlertCircle, ArrowUpRight, Building2, GraduationCap } from "lucide-react";
 
 import {
   Card,
@@ -44,6 +44,17 @@ const surveyCardItems: SurveyCardItem[] = [
     accentClassName:
       "border-emerald-200 bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.18),_transparent_58%),linear-gradient(180deg,_rgba(255,255,255,0.96),_rgba(236,253,245,0.96))]",
     iconClassName: "bg-emerald-100 text-emerald-700",
+  },
+  {
+    title: "Report Issue",
+    description:
+      "Open the report issue form to report any issues or feedback on the campus.",
+    href: "https://docs.google.com/forms/d/e/1FAIpQLSciYhXQ1QI8jd_hVRRGXJafyyClIh_LY20j6rCnSt6h7_S_EQ/viewform?embedded=true%22",
+    ctaLabel: "Open report issue form",
+    icon: AlertCircle,
+    accentClassName:
+      "border-rose-200 bg-[radial-gradient(circle_at_top_left,_rgba(244,63,94,0.18),_transparent_58%),linear-gradient(180deg,_rgba(255,255,255,0.96),_rgba(254,242,242,0.96))]",
+    iconClassName: "bg-rose-100 text-rose-700",
   },
 ];
 
