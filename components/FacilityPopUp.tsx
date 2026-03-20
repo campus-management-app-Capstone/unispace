@@ -151,6 +151,8 @@ const FacilityPopUp = ({ facility, onClose }) => {
     }, [selectedSlots])
 
     const handleBooking = async () => {
+        if (isBooking) return;
+        if (selectedSlots.length === 0) return;
         const id = toast.loading("Booking...");
         setIsBooking(true);
 
@@ -244,6 +246,7 @@ const FacilityPopUp = ({ facility, onClose }) => {
                     autoClose: 2000,
                 });
                 setIsBooking(false);
+                setSelectedSlots([]);
                 fetchFacilityAvailability(facility.FacilityID, facility.Type)
 
             } else {
