@@ -100,6 +100,7 @@ function CreateModal({ onClose, onSuccess }) {
         const annID = result.data
         onSuccess({ annID, title, content }); // Only call success if it actually succeeded
       } else {
+        console.log(result.error);
         toast.update(id, {
           render: "Failed to Add",
           type: "error",

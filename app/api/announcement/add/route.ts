@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
 
         if (error) {
             return NextResponse.json(
-                { error: 'Failed to add vehicle: ' + error.message },
+                { error: 'Failed to add announcement: ' + error.message },
                 { status: 500 }
             );
         }
@@ -70,9 +70,9 @@ export async function POST(request: NextRequest) {
         );
 
     } catch (error) {
-        console.error('Add Car POST error:', error);
+        console.error('Add Ann POST error:', error);
         return NextResponse.json(
-            { error: 'Internal server error' },
+            { error },
             { status: 500 }
         );
     }
