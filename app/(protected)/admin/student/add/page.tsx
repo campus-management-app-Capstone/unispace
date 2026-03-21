@@ -327,9 +327,8 @@ className="transition-colors hover:bg-accent"
 Generate
 </Button>
 </div>
-
 <p className="text-xs text-gray-500">
-Student must change password on first login
+Password must be at least 8 characters and cannot be a weak or commonly breached password.
 </p>
 </div>
 
@@ -502,11 +501,8 @@ handleSelectChange('intakeYear', value)
 <p className="text-sm text-blue-800">
 
 <strong>Auto Generated:</strong>
-
-StudentID (UUID)  
-StudentCode (STU000001 → STU000002...)  
-EnrollmentID (UUID)  
-
+<br />
+UserID, StudentID, StudentCode, EnrollmentID
 </p>
 
 </div>

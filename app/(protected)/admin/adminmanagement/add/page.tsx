@@ -148,13 +148,16 @@ export default function AddAdminPage() {
                     Generate
                   </Button>
                 </div>
+                <p className="text-xs text-gray-500">
+                  Password must be at least 8 characters and cannot be a weak or commonly breached password.
+                </p>
               </div>
 
               <div className="rounded-lg bg-blue-50 p-4">
                 <p className="text-sm text-blue-800">
                   <strong>Auto Generated:</strong>
                   <br />
-                  UserID (Clerk), AdminID, AdminCode, Role=admin
+                  UserID, AdminID, AdminCode, Role
                 </p>
               </div>
 

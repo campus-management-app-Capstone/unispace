@@ -77,7 +77,8 @@ export default function LecturerManagementPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedDepartment, setSelectedDepartment] = useState("all");
+  const [selectedDepartmentCode, setSelectedDepartmentCode] = useState("all");
+  const [selectedDepartmentName, setSelectedDepartmentName] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
 
   const fetchData = useCallback(async () => {
@@ -115,13 +116,16 @@ export default function LecturerManagementPage() {
           lecturer.Name.toLowerCase().includes(query) ||
           lecturer.Email.toLowerCase().includes(query);
 
-        const matchesDepartment =
-          selectedDepartment === "all" || lecturer.DepartmentID === selectedDepartment;
+        const matchesDepartmentCode =
+          selectedDepartmentCode === "all" || lecturer.DepartmentID === selectedDepartmentCode;
 
-        return matchesSearch && matchesDepartment;
+        const matchesDepartmentName =
+          selectedDepartmentName === "all" || lecturer.DepartmentID === selectedDepartmentName;
+
+        return matchesSearch && matchesDepartmentCode && matchesDepartmentName;
       })
       .sort((a, b) => a.LecturerCode.localeCompare(b.LecturerCode));
-  }, [lecturers, searchQuery, selectedDepartment]);
+  }, [lecturers, searchQuery, selectedDepartmentCode, selectedDepartmentName]);
 
   const totalPages = Math.max(1, Math.ceil(filteredLecturers.length / ITEMS_PER_PAGE));
 
@@ -153,11 +157,15 @@ export default function LecturerManagementPage() {
     return [...new Set(pages)];
   }, [currentPage, totalPages]);
 
-  const hasActiveFilters = searchQuery !== "" || selectedDepartment !== "all";
+  const hasActiveFilters =
+    searchQuery !== "" ||
+    selectedDepartmentCode !== "all" ||
+    selectedDepartmentName !== "all";
 
   const clearFilters = () => {
     setSearchQuery("");
-    setSelectedDepartment("all");
+    setSelectedDepartmentCode("all");
+    setSelectedDepartmentName("all");
     setCurrentPage(1);
   };
 
@@ -223,11 +231,36 @@ export default function LecturerManagementPage() {
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">Department</label>
+          <label className="text-xs font-medium text-muted-foreground">Department Code</label>
           <Select
-            value={selectedDepartment}
+            value={selectedDepartmentCode}
             onValueChange={(value) => {
-              setSelectedDepartment(value);
+              setSelectedDepartmentCode(value);
+              setSelectedDepartmentName(value);
+              setCurrentPage(1);
+            }}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="All Codes" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Codes</SelectItem>
+              {departments.map((department) => (
+                <SelectItem key={department.DepartmentID} value={department.DepartmentID}>
+                  {department.DepartmentID}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground">Department Name</label>
+          <Select
+            value={selectedDepartmentName}
+            onValueChange={(value) => {
+              setSelectedDepartmentName(value);
+              setSelectedDepartmentCode(value);
               setCurrentPage(1);
             }}
           >

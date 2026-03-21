@@ -213,7 +213,9 @@ export default function AddLecturerPage() {
                     Generate
                   </Button>
                 </div>
-                <p className="text-xs text-gray-500">Lecturer can reset password later in account settings.</p>
+                <p className="text-xs text-gray-500">
+                  Password must be at least 8 characters and cannot be a weak or commonly breached password.
+                </p>
               </div>
 
               <div className="space-y-2">
@@ -239,7 +241,7 @@ export default function AddLecturerPage() {
                 <p className="text-sm text-blue-800">
                   <strong>Auto Generated:</strong>
                   <br />
-                  UserID (Clerk), LecturerID (UUID), LecturerCode, EmployedTime, Role=lecturer
+                  UserID, LecturerID, LecturerCode, EmployedTime, Role
                 </p>
               </div>
 
