@@ -20,6 +20,7 @@ async function deleteAdminById(adminId: string) {
   const currentUserId = sessionClaims?.sub;
 
   const supabase = createServerSupabaseClient();
+  const systemUserId = "system_deleted";
 
   const { data: admin, error: adminError } = await supabase
     .from("Admin")
@@ -33,6 +34,21 @@ async function deleteAdminById(adminId: string) {
 
   if (currentUserId && admin.UserID === currentUserId) {
     return NextResponse.json({ error: "You cannot delete your own admin account" }, { status: 400 });
+  }
+
+  const { error: systemUserError } = await supabase.from("User").upsert({ UserID: systemUserId });
+
+  if (systemUserError) {
+    throw new Error(`Failed to ensure system user: ${systemUserError.message}`);
+  }
+
+  const { error: announcementUpdateError } = await supabase
+    .from("Announcement")
+    .update({ UserID: systemUserId })
+    .eq("UserID", admin.UserID);
+
+  if (announcementUpdateError) {
+    throw new Error(`Failed to reassign announcements: ${announcementUpdateError.message}`);
   }
 
   const { error: adminDeleteError } = await supabase.from("Admin").delete().eq("AdminID", adminId);

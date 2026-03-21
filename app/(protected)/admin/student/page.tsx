@@ -336,6 +336,7 @@ export default function StudentManagementPage() {
             value={selectedCourseCode}
             onValueChange={(v) => {
               setSelectedCourseCode(v);
+              setSelectedCourse(v);
               setCurrentPage(1);
             }}
           >
@@ -372,6 +373,7 @@ export default function StudentManagementPage() {
             value={selectedCourse}
             onValueChange={(v) => {
               setSelectedCourse(v);
+              setSelectedCourseCode(v);
               setCurrentPage(1);
             }}
           >

@@ -45,14 +45,15 @@ export async function POST(request: NextRequest) {
                 Title: title,
                 Content: content,
                 Target: target,
-                CreatedAt: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+                CreatedAt: new Date()
             }
         ])
+        .select()
         .single();
 
         if (error) {
             return NextResponse.json(
-                { error: 'Failed to add vehicle: ' + error.message },
+                { error: 'Failed to add announcement: ' + error.message },
                 { status: 500 }
             );
         }
@@ -62,15 +63,16 @@ export async function POST(request: NextRequest) {
         // success
         return NextResponse.json(
             {
-                success: true
+                success: true,
+                data: data.AnnouncementID
             },
             { status: 201 }
         );
 
     } catch (error) {
-        console.error('Add Car POST error:', error);
+        console.error('Add Ann POST error:', error);
         return NextResponse.json(
-            { error: 'Internal server error' },
+            { error },
             { status: 500 }
         );
     }

@@ -103,6 +103,7 @@ const page = () => {
     console.log("Navigating from", trimmedFrom, "(", foundFromCoord, ") to", trimmedTo, "(", foundToCoord, ")");
     const path = navigate(foundFromCoord, foundToCoord); // use entry points
     setPath(path);
+    console.log(JSON.stringify(path));
   }
 
   return (

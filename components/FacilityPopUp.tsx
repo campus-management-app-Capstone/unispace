@@ -151,6 +151,8 @@ const FacilityPopUp = ({ facility, onClose }) => {
     }, [selectedSlots])
 
     const handleBooking = async () => {
+        if (isBooking) return;
+        if (selectedSlots.length === 0 && facility.Name !== "Gym") return;
         const id = toast.loading("Booking...");
         setIsBooking(true);
 
@@ -173,7 +175,7 @@ const FacilityPopUp = ({ facility, onClose }) => {
             if (!response.ok && result.error) {
                 console.error("Failed to Pay:", result.error);
                 toast.update(id, {
-                    render: "Failed to Pay",
+                    render: "Failed to Pay. You might not have enough balance.",
                     type: "error",
                     isLoading: false,
                     autoClose: 2000,
@@ -185,7 +187,7 @@ const FacilityPopUp = ({ facility, onClose }) => {
         } catch (error) {
             console.error("Failed to Pay:", error);
             toast.update(id, {
-                render: "Failed to Pay",
+                render: "Failed to Pay. You might not have enough balance.",
                 type: "error",
                 isLoading: false,
                 autoClose: 2000,
@@ -244,6 +246,7 @@ const FacilityPopUp = ({ facility, onClose }) => {
                     autoClose: 2000,
                 });
                 setIsBooking(false);
+                setSelectedSlots([]);
                 fetchFacilityAvailability(facility.FacilityID, facility.Type)
 
             } else {

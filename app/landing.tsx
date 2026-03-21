@@ -1,5 +1,6 @@
 import React from 'react'
 import Link from 'next/link'
+import { Info, Newspaper, SquareGanttChart } from 'lucide-react'
 
 export default function Landing() {
   return (
@@ -8,7 +9,7 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center gap-4">
-              
+
             </div>
             <nav className="hidden md:flex items-center gap-8">
               <a className="text-sm font-medium hover:text-primary transition-colors" href="#home">Home</a>
@@ -43,7 +44,7 @@ export default function Landing() {
                   Experience a seamless academic life with UniSpace. Manage your courses, stay updated with campus news, and access student support all in one place. Designed for modern scholars.
                 </p>
                 <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
-                  
+
                   <button className="w-full sm:w-auto flex items-center justify-center gap-2 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 text-base font-bold py-4 px-10 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all">
                     <span className="material-symbols-outlined"></span>
                     Explore Campus
@@ -69,21 +70,21 @@ export default function Landing() {
 
               <div className="group p-8 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-xl transition-all hover:-translate-y-1">
                 <div className="w-14 h-14 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-6 group-hover:bg-primary group-hover:text-white transition-colors">
-                  <span className="material-symbols-outlined text-3xl"></span>
+                  <SquareGanttChart />
                 </div>
                 <h3 className="text-xl font-bold mb-3 text-slate-900 dark:text-white">Course Management</h3>
                 <p className="text-slate-600 dark:text-slate-400">Easily track your modules, assignments, and grades in real-time with automated scheduling and alerts.</p>
               </div>
               <div className="group p-8 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-xl transition-all hover:-translate-y-1">
                 <div className="w-14 h-14 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-6 group-hover:bg-primary group-hover:text-white transition-colors">
-                  <span className="material-symbols-outlined text-3xl"></span>
+                  <Newspaper />
                 </div>
                 <h3 className="text-xl font-bold mb-3 text-slate-900 dark:text-white">Campus News</h3>
                 <p className="text-slate-600 dark:text-slate-400">Stay informed with the latest happenings, official announcements, and student-led initiatives around campus.</p>
               </div>
               <div className="group p-8 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-xl transition-all hover:-translate-y-1">
                 <div className="w-14 h-14 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-6 group-hover:bg-primary group-hover:text-white transition-colors">
-                  <span className="material-symbols-outlined text-3xl"></span>
+                  <Info />
                 </div>
                 <h3 className="text-xl font-bold mb-3 text-slate-900 dark:text-white">Student Support</h3>
                 <p className="text-slate-600 dark:text-slate-400">Access dedicated resources, mental health advocacy, and academic counseling services whenever you need them.</p>
@@ -146,7 +147,6 @@ export default function Landing() {
                 </div> */}
                 <p className="text-slate-700 dark:text-slate-300 italic mb-6">&quot;UniSpace completely transformed how I manage my studies. Having everything in one app is a game changer for my productivity.&quot;</p>
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-slate-200" data-alt="Student profile photo" ></div>
                   <div>
                     <h5 className="font-bold text-slate-900 dark:text-white">Alex Johnson</h5>
                     <p className="text-xs text-slate-500">Computer Science, Year 3</p>
@@ -161,9 +161,8 @@ export default function Landing() {
                   <span className="material-symbols-outlined fill-1">star</span>
                   <span className="material-symbols-outlined fill-1">star</span>
                 </div> */}
-                <p className="text-slate-700 dark:text-slate-300 italic mb-6">&quot;The support section helped me find a mentor when I was struggling with my thesis. I feel more connected to the university than ever.&quot;</p>
+                <p className="text-slate-700 dark:text-slate-300 italic mb-6">&quot;The support section let me feel more connected to the university than ever.&quot;</p>
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-slate-200" data-alt="Student profile photo" ></div>
                   <div>
                     <h5 className="font-bold text-slate-900 dark:text-white">Sarah Lim</h5>
                     <p className="text-xs text-slate-500">Business Management, Year 2</p>
@@ -180,7 +179,6 @@ export default function Landing() {
                 </div> */}
                 <p className="text-slate-700 dark:text-slate-300 italic mb-6">&quot;I never miss a campus event now. The notifications for news and festivals are timely and actually useful for social life.&quot;</p>
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-slate-200" data-alt="Student profile photo" ></div>
                   <div>
                     <h5 className="font-bold text-slate-900 dark:text-white">Michael Chen</h5>
                     <p className="text-xs text-slate-500">Engineering, Year 4</p>
@@ -198,9 +196,13 @@ export default function Landing() {
               <h2 className="text-3xl md:text-5xl font-black relative z-10">Ready to start your journey?</h2>
               <p className="text-white/80 text-lg max-w-xl mx-auto relative z-10">Join over 15,000 students who use UniSpace daily to streamline their academic life.</p>
               <div className="max-w-md mx-auto relative z-10">
-                <form className="flex flex-col sm:flex-row gap-3">
-                  <input className="flex-1 rounded-xl px-4 py-4 text-slate-900 focus:outline-none focus:ring-2 focus:ring-white" placeholder="Enter your student email" type="email" />
-                  <button className="bg-slate-900 text-white font-bold py-4 px-8 rounded-xl hover:bg-slate-800 transition-all">Get Started</button>
+                <form className="justify-center flex flex-col sm:flex-row gap-3">
+                  <Link
+                    href="/sign-in"
+                    className="hidden rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800 sm:block"
+                  >
+                    Sign In
+                  </Link>
                 </form>
               </div>
             </div>

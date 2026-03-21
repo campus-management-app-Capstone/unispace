@@ -97,10 +97,12 @@ function CreateModal({ onClose, onSuccess }) {
           isLoading: false,
           autoClose: 2000,
         });
-        onSuccess({ title, content }); // Only call success if it actually succeeded
+        const annID = result.data
+        onSuccess({ annID, title, content }); // Only call success if it actually succeeded
       } else {
+        console.log(result.error);
         toast.update(id, {
-          render: "Failed to Add. Please ensure the details are correct",
+          render: "Failed to Add",
           type: "error",
           isLoading: false,
           autoClose: 2000,
@@ -188,7 +190,7 @@ export default function AnnouncementPage() {
       const result = await response.json();
 
       if (response.ok && result.success) {
-        setAnnouncements(result.data || []);
+        setAnnouncements(result.data);
         toast.update(id, {
           render: "Loading completed",
           type: "success",
@@ -234,10 +236,10 @@ export default function AnnouncementPage() {
     return matchSearch && matchTarget
   })
 
-  const handleSuccess = ({ title }) => {
+  const handleSuccess = ({ annID, title }) => {
     const Target = "All";
     const next = {
-      AnnouncementID: Math.random().toString(), // Temporary ID until refresh
+      AnnouncementID: annID,
       Title: title,
       Target,
       CreatedAt: new Date().toISOString(),
@@ -246,9 +248,58 @@ export default function AnnouncementPage() {
     setShowModal(false)
   }
 
-  const handleDelete = (id) => {
-    setAnnouncements(prev => prev.filter(a => a.AnnouncementID !== id))
-    toast.success('Announcement deleted.')
+  const handleDelete = async (id) => {
+    const needDlt = confirm("Are you sure to delete this announcement?");
+
+    if(!needDlt){
+      return;
+    }
+
+    console.log("Deleting: " + id);
+    // Validation
+    if (!id.trim()) {
+      toast.error("Please pass in ID");
+      return;
+    }
+
+    const dltID = toast.loading("Deleting ...");
+
+    try {
+      const response = await fetch("/api/announcement/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          annID: id
+        })
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        toast.update(dltID, {
+          render: "Deleted Successfully",
+          type: "success",
+          isLoading: false,
+          autoClose: 2000,
+        });
+        setAnnouncements(prev => prev.filter(a => a.AnnouncementID !== id))
+      } else {
+        toast.update(dltID, {
+          render: "Failed to Delete.",
+          type: "error",
+          isLoading: false,
+          autoClose: 2000,
+        });
+      }
+    } catch (err) {
+      console.error("Fetch crashed:", err);
+      toast.update(dltID, {
+        render: ("Delete crashed:" + err.message),
+        type: "error",
+        isLoading: false,
+        autoClose: 2000,
+      });
+    }
   }
 
   return (

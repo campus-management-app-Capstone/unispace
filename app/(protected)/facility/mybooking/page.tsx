@@ -7,7 +7,7 @@ import { toast } from 'react-toastify';
 const page = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [bookings, setBookings] = useState([]);
-  
+
   // filter option
   const [activeFilter, setActiveFilter] = useState("All");
   const filterOptions = ["All", "Upcoming", "Active Now", "Completed"];
@@ -66,7 +66,7 @@ const page = () => {
       return { date, time: "Full Day Entry" };
     }
 
-    const formatTime = (d) => d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false});
+    const formatTime = (d) => d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
     return { date, time: `${formatTime(startDate)} - ${formatTime(endDate)}` };
   };
 
@@ -86,15 +86,31 @@ const page = () => {
   };
 
   // filter the booking 
-  const filteredBookings = bookings.filter((booking) => {
-    if (activeFilter === "All") return true;
-    
-    // Calculate status
-    const statusInfo = getBookingStatus(booking.StartTime, booking.EndTime);
-    
-    // return matched booking
-    return statusInfo.label === activeFilter;
-  });
+  const filteredBookings = bookings
+    .filter((booking) => {
+      if (activeFilter === "All") return true;
+      const statusInfo = getBookingStatus(booking.StartTime, booking.EndTime);
+      return statusInfo.label === activeFilter;
+    })
+    .sort((a, b) => {
+      const now = new Date();
+      const aStart = new Date(a.StartTime);
+      const bStart = new Date(b.StartTime);
+      const aEnd = new Date(a.EndTime);
+      const bEnd = new Date(b.EndTime);
+
+      const aCompleted = now > aEnd;
+      const bCompleted = now > bEnd;
+
+      // Push completed to bottom
+      if (aCompleted !== bCompleted) return aCompleted ? 1 : -1;
+
+      // Among non-completed, sort by soonest start time first
+      // Among completed, sort most recently ended first
+      return aCompleted
+        ? bEnd - aEnd   
+        : aStart - bStart; 
+    });
 
   if (isLoading) {
     return (
@@ -116,7 +132,7 @@ const page = () => {
       {/* main */}
       <div className="relative flex justify-center py-5 px-5 z-10 min-h-screen">
         <div className="layout-content-container flex flex-col max-w-[1280px] w-full flex-1">
-          
+
           {/* Header */}
           <div className="flex flex-col gap-4 sm:gap-6 mb-6 mt-4">
             <h1 className="text-slate-900 dark:text-slate-100 text-3xl sm:text-4xl lg:text-5xl font-black leading-tight tracking-[-0.033em]">
@@ -130,11 +146,10 @@ const page = () => {
               <button
                 key={opt}
                 onClick={() => setActiveFilter(opt)}
-                className={`px-5 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all duration-200 cursor-pointer ${
-                  activeFilter === opt
+                className={`px-5 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all duration-200 cursor-pointer ${activeFilter === opt
                     ? 'bg-primary text-white shadow-md shadow-primary/20 scale-105'
                     : 'bg-white/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:scale-105 border border-slate-200 dark:border-slate-700'
-                }`}
+                  }`}
               >
                 {opt}
               </button>
@@ -148,8 +163,8 @@ const page = () => {
               <Ticket className="w-16 h-16 text-slate-300 dark:text-slate-700 mb-4" />
               <h3 className="text-xl font-bold text-slate-700 dark:text-slate-200 mb-2">No Bookings Found</h3>
               <p className="text-slate-500 dark:text-slate-400 text-center">
-                {activeFilter === "All" 
-                  ? "You haven't booked any campus facilities yet." 
+                {activeFilter === "All"
+                  ? "You haven't booked any campus facilities yet."
                   : `You have no ${activeFilter.toLowerCase()} bookings.`}
               </p>
             </div>
@@ -162,8 +177,8 @@ const page = () => {
                 const StatusIcon = status.icon;
 
                 return (
-                  <div 
-                    key={index} 
+                  <div
+                    key={index}
                     className="group bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-200/60 dark:border-slate-800/60 flex flex-col relative overflow-hidden"
                   >
                     {/* Status Badge */}
@@ -191,7 +206,7 @@ const page = () => {
                         <span className="text-sm font-semibold">{time}</span>
                       </div>
                     </div>
-                    
+
                   </div>
                 )
               })}

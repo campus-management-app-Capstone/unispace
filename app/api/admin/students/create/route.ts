@@ -1,6 +1,7 @@
 import { NextResponse, NextRequest } from "next/server";
 import { clerkClient } from "@clerk/nextjs/server";
 import { createBrowserSupabaseClient } from "@/lib/supabase-browser";
+import { getClerkPasswordErrorMessage } from "@/lib/clerk-errors";
 
 export async function POST(req: NextRequest) {
   try {
@@ -108,6 +109,11 @@ export async function POST(req: NextRequest) {
         throw error; // Re-throw to be caught by outer catch
       }
     } catch (error: any) {
+      const passwordError = getClerkPasswordErrorMessage(error);
+      if (passwordError) {
+        return NextResponse.json({ error: passwordError }, { status: 422 });
+      }
+
       const errorCode = error?.errors?.[0]?.code;
       if (errorCode === "form_identifier_exists" || errorCode === "form_identifier_not_unique") {
         return NextResponse.json(
