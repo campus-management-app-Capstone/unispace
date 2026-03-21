@@ -26,7 +26,7 @@ import {
   Wallet,
   Car,
   MapPin,
-  HelpCircle
+  HelpCircle,
 } from "lucide-react";
 import {
   NavigationMenu,
@@ -89,6 +89,11 @@ const studentNavItems = [
     label: "Facility",
     href: "/facility",
     icon: School
+  },
+  {
+    label: "Survey",
+    href: "/survey",
+    icon: FileText
   },
   {
     label: "Announcement",
