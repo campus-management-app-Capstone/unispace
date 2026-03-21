@@ -152,7 +152,7 @@ const FacilityPopUp = ({ facility, onClose }) => {
 
     const handleBooking = async () => {
         if (isBooking) return;
-        if (selectedSlots.length === 0) return;
+        if (selectedSlots.length === 0 && facility.Name !== "Gym") return;
         const id = toast.loading("Booking...");
         setIsBooking(true);
 
