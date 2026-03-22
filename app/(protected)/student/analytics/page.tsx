@@ -4,6 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase";
 import { getStudentAttendanceOverview } from "@/lib/database";
+import SpendingChart from "@/components/SpendingChart";
 
 interface StudentTimetableSlot {
   id: string;
@@ -79,22 +80,74 @@ export default async function StudentDashboardPage() {
         return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
       })
       .reduce((sum, tx) => sum + tx.Amount, 0) ?? 0;
+  
+    // Spending Chart Data (last 4 months)
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-  // Facility bookings
-  const { data: bookingsData } = await supabase
-    .from("Booking")
-    .select("StartTime, EndTime, Facility(Name)")
-    .eq("UserID", userId);
-  const totalBookings = bookingsData?.length ?? 0;
+    const last4MonthsData = Array.from({ length: 4 }).map((_, i) => {
+      const date = new Date();
+      date.setMonth(date.getMonth() - (3 - i));
 
-  // Current semester subjects (no duplicates)
-  const { data: enrollments } = await supabase
-    .from("Enrollment")
-    .select("EnrollmentID")
-    .eq("StudentID", studentId);
+      const month = date.getMonth();
+      const year = date.getFullYear();
 
-  const enrollmentIds = (enrollments ?? []).map((e) => e.EnrollmentID);
-  let currentSemesterSubjects: string[] = [];
+      const total =
+        transactions
+          ?.filter((tx) => {
+            const d = new Date(tx.Time);
+            return d.getMonth() === month && d.getFullYear() === year;
+          })
+          .reduce((sum, tx) => sum + tx.Amount, 0) ?? 0;
+
+      return {
+        month: monthNames[month],
+        total,
+      };
+    });
+
+    // Facility bookings
+    const { data: bookingsData } = await supabase
+      .from("Booking")
+      .select("StartTime, EndTime, Facility(Name)")
+      .eq("UserID", userId);
+    const totalBookings = bookingsData?.length ?? 0;
+
+    // Current semester subjects (no duplicates)
+    const { data: enrollments } = await supabase
+      .from("Enrollment")
+      .select("EnrollmentID")
+      .eq("StudentID", studentId);
+
+    const enrollmentIds = (enrollments ?? []).map((e) => e.EnrollmentID);
+    let currentSemesterSubjects: string[] = [];
+
+    if (enrollmentIds.length > 0) {
+      const { data: classRegs } = await supabase
+        .from("ClassRegistration")
+        .select("ClassID")
+        .in("EnrollmentID", enrollmentIds);
+
+      const classIds = (classRegs ?? []).map((c) => c.ClassID).filter(Boolean);
+
+      if (classIds.length > 0) {
+        const { data: classes } = await supabase
+          .from("Class")
+          .select("Subject(Name)")
+          .in("ClassID", classIds);
+
+        currentSemesterSubjects = Array.from(
+          new Set((classes ?? []).map((c) => c.Subject?.Name).filter(Boolean))
+        );
+      }
+    }
+
+    //Upcoming classes (today only)
+  let upcomingSlots: StudentTimetableSlot & {
+    id: Key | null | undefined;
+    subjectName: ReactNode;
+    venue: string;
+    time: ReactNode; dayName: string 
+  }[] = [];
 
   if (enrollmentIds.length > 0) {
     const { data: classRegs } = await supabase
@@ -102,88 +155,60 @@ export default async function StudentDashboardPage() {
       .select("ClassID")
       .in("EnrollmentID", enrollmentIds);
 
-    const classIds = (classRegs ?? []).map((c) => c.ClassID).filter(Boolean);
+    const classIds = Array.from(
+      new Set((classRegs ?? []).map((r) => r.ClassID).filter(Boolean))
+    ) as string[];
 
     if (classIds.length > 0) {
-      const { data: classes } = await supabase
-        .from("Class")
-        .select("Subject(Name)")
-        .in("ClassID", classIds);
+      const { data: slotRows } = await supabase
+        .from("TimetableSlot")
+        .select(`
+          TimetableSlotID,
+          Day,
+          Start,
+          End,
+          Facility(Name),
+          Class(
+            ClassID,
+            Subject(Name),
+            Lecturer(LecturerCode)
+          )
+        `)
+        .in("ClassID", classIds)
+        .order("Day", { ascending: true })
+        .order("Start", { ascending: true });
 
-      currentSemesterSubjects = Array.from(
-        new Set((classes ?? []).map((c) => c.Subject?.Name).filter(Boolean))
-      );
+      const allSlots = mapToStudentSlots(slotRows ?? []);
+      const nowTime = new Date();
+      const todayStr = nowTime.toLocaleDateString("en-CA"); // yyyy-mm-dd
+
+      // Day mapping
+      const fullDayMap: Record<string, string> = {
+        Mon: "Monday",
+        Tue: "Tuesday",
+        Wed: "Wednesday",
+        Thu: "Thursday",
+        Fri: "Friday",
+        Sat: "Saturday",
+        Sun: "Sunday",
+      };
+
+        upcomingSlots = allSlots
+      .filter(slot => {
+        if (!slot.start || !slot.day) return false;
+
+        const [hours, minutes] = slot.start.split(":").map(Number);
+        const slotDate = new Date(nowTime.getFullYear(), nowTime.getMonth(), nowTime.getDate(), hours, minutes, 0, 0);
+
+        // Only today & after now
+        return slotDate >= nowTime;
+      })
+      .map(slot => ({
+        ...slot,
+        dayName: slot.day ? fullDayMap[slot.day.slice(0, 3)] ?? slot.day : "—"
+      }));
     }
   }
-
-  //Upcoming classes (today only)
-let upcomingSlots: StudentTimetableSlot & {
-  id: Key | null | undefined;
-  subjectName: ReactNode;
-  venue: string;
-  time: ReactNode; dayName: string 
-}[] = [];
-
-if (enrollmentIds.length > 0) {
-  const { data: classRegs } = await supabase
-    .from("ClassRegistration")
-    .select("ClassID")
-    .in("EnrollmentID", enrollmentIds);
-
-  const classIds = Array.from(
-    new Set((classRegs ?? []).map((r) => r.ClassID).filter(Boolean))
-  ) as string[];
-
-  if (classIds.length > 0) {
-    const { data: slotRows } = await supabase
-      .from("TimetableSlot")
-      .select(`
-        TimetableSlotID,
-        Day,
-        Start,
-        End,
-        Facility(Name),
-        Class(
-          ClassID,
-          Subject(Name),
-          Lecturer(LecturerCode)
-        )
-      `)
-      .in("ClassID", classIds)
-      .order("Day", { ascending: true })
-      .order("Start", { ascending: true });
-
-    const allSlots = mapToStudentSlots(slotRows ?? []);
-    const nowTime = new Date();
-    const todayStr = nowTime.toLocaleDateString("en-CA"); // yyyy-mm-dd
-
-    // Day mapping
-    const fullDayMap: Record<string, string> = {
-      Mon: "Monday",
-      Tue: "Tuesday",
-      Wed: "Wednesday",
-      Thu: "Thursday",
-      Fri: "Friday",
-      Sat: "Saturday",
-      Sun: "Sunday",
-    };
-
-      upcomingSlots = allSlots
-    .filter(slot => {
-      if (!slot.start || !slot.day) return false;
-
-      const [hours, minutes] = slot.start.split(":").map(Number);
-      const slotDate = new Date(nowTime.getFullYear(), nowTime.getMonth(), nowTime.getDate(), hours, minutes, 0, 0);
-
-      // Only today & after now
-      return slotDate >= nowTime;
-    })
-    .map(slot => ({
-      ...slot,
-      dayName: slot.day ? fullDayMap[slot.day.slice(0, 3)] ?? slot.day : "—"
-    }));
-  }
-}
 
   return (
     <div className="max-w-6xl mx-auto p-6 grid md:grid-cols-4 gap-6">
@@ -209,6 +234,14 @@ if (enrollmentIds.length > 0) {
       <div className="rounded-2xl border p-6 text-center shadow-sm bg-white">
         <h2 className="text-lg font-semibold text-gray-700 mb-2">Facility Bookings</h2>
         <p className="text-4xl font-bold text-purple-600">{totalBookings}</p>
+      </div>
+
+      {/* Spending Trend (Last 4 Months) */}
+      <div className="rounded-2xl border p-6 shadow-sm bg-white md:col-span-2">
+        <h2 className="text-lg font-semibold text-gray-700 mb-4">
+          Spending Trend (Last 4 Months)
+        </h2>
+        <SpendingChart data={last4MonthsData} />
       </div>
 
       {/* Current Semester Subjects */}

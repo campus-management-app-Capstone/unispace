@@ -7,6 +7,7 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
+  CartesianGrid,
 } from "recharts";
 
 export default function AttendanceChart({
@@ -20,7 +21,8 @@ export default function AttendanceChart({
   return (
     <ResponsiveContainer width="100%" height={300}>
       <BarChart data={data}>
-        <XAxis dataKey="className" />
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="className" hide/>
         <YAxis domain={[0, 100]} />
         <Tooltip />
         <Bar dataKey="attendanceRate" fill="#3B82F6" /> {/* Blue */}
