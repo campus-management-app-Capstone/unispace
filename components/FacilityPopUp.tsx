@@ -22,6 +22,7 @@ const FacilityPopUp = ({ facility, onClose }) => {
     const [date, setDate] = React.useState<Date>(new Date());
     const [selectedSlots, setSelectedSlots] = useState([]);
     const [isBooking, setIsBooking] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
     // for classroom, lab
     const [weeklySchedule, setWeeklySchedule] = useState({
@@ -49,6 +50,7 @@ const FacilityPopUp = ({ facility, onClose }) => {
     ])
 
     const fetchFacilityAvailability = async (facilityID, type) => {
+        setIsLoading(true);
         try {
             // format the date to solve UTC problem
             const year = date?.getFullYear();
@@ -143,6 +145,8 @@ const FacilityPopUp = ({ facility, onClose }) => {
             }
         } catch (err) {
             console.error("fetch facility availability crashed:", err);
+        } finally {
+            setIsLoading(false);
         }
     }
 
@@ -152,6 +156,9 @@ const FacilityPopUp = ({ facility, onClose }) => {
 
     const handleBooking = async () => {
         if (isBooking) return;
+        if (selectedSlots.length === 0 || date === null) {
+            toast.error("Please select a date and time");
+        }
         if (selectedSlots.length === 0 && facility.Name !== "Gym") return;
         const id = toast.loading("Booking...");
         setIsBooking(true);
@@ -293,6 +300,23 @@ const FacilityPopUp = ({ facility, onClose }) => {
         return 'bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 hover:border-primary/50 cursor-pointer transition-colors'
     }
 
+    if (isLoading) {
+        return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+                {/* Backdrop */}
+                <div
+                    className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm"
+                    onClick={onClose}
+                />
+                <div className="relative bg-white dark:bg-slate-900 w-full max-w-2xl rounded-2xl shadow-2xl flex flex-col overflow-hidden my-auto">
+                    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+                        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
             {/* Backdrop */}
@@ -348,7 +372,15 @@ const FacilityPopUp = ({ facility, onClose }) => {
                                         <Calendar
                                             mode="single"
                                             selected={date}
-                                            onSelect={setDate}
+                                            onSelect={(selectedDate) => {
+                                                if (!selectedDate) return;
+                                                if (selectedDate?.getTime() !== date?.getTime()) {
+                                                    setDate(selectedDate);
+                                                    setSelectedSlots([]); // reset slots when date changes
+                                                }
+
+                                            }}
+
                                             defaultMonth={date}
                                             disabled={(date) => {
                                                 const now = new Date();
