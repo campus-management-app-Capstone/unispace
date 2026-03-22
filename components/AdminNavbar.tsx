@@ -132,6 +132,16 @@ export default function AdminNavbar() {
 
   /** Check if a given href link is active */
   const isActive = (href: string) => pathname.startsWith(href);
+  const handleSidebarChange = (nextOpen: boolean) => {
+    if (pathname === "/help") {
+      window.dispatchEvent(
+        new CustomEvent(nextOpen ? "typebot:close" : "typebot:open", {
+          detail: nextOpen ? { reopenOnClose: true } : undefined,
+        })
+      );
+    }
+    setSidebarOpen(nextOpen);
+  };
 
   return (
     <header className="sticky top-0 z-50 bg-background border-b">
@@ -199,7 +209,7 @@ export default function AdminNavbar() {
             className="lg:hidden"
             variant="ghost"
             size="icon"
-            onClick={() => setSidebarOpen(true)}
+            onClick={() => handleSidebarChange(true)}
             aria-label="Open navigation sidebar"
           >
             <Menu className="size-5" />
@@ -209,7 +219,7 @@ export default function AdminNavbar() {
       </nav>
 
       {/* hamburger menu */}
-      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+      <Sheet open={sidebarOpen} onOpenChange={handleSidebarChange}>
         <SheetContent side="right" className="w-72 p-0">
           <SheetHeader className="p-4 pb-2">
             <SheetTitle className="text-lg font-semibold">Navigation</SheetTitle>
@@ -220,7 +230,7 @@ export default function AdminNavbar() {
             {/* admin page link */}
             <Link
               href="/admin"
-              onClick={() => setSidebarOpen(false)}
+              onClick={() => handleSidebarChange(false)}
               className={cn(
                 "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
                 pathname === "/admin" && "bg-accent/60 font-medium"
@@ -247,7 +257,7 @@ export default function AdminNavbar() {
                     <Link
                       key={href}
                       href={href}
-                      onClick={() => setSidebarOpen(false)}
+                      onClick={() => handleSidebarChange(false)}
                       className={cn(
                         "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
                         isActive(href) && "bg-accent/60 font-medium"
@@ -268,7 +278,7 @@ export default function AdminNavbar() {
               <Link
                 key={href}
                 href={href}
-                onClick={() => setSidebarOpen(false)}
+                onClick={() => handleSidebarChange(false)}
                 className={cn(
                   "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
                   isActive(href) && "bg-accent/60 font-medium"
