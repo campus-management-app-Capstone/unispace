@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Bubble } from "@typebot.io/react";
-import { useMemo, useState, type ReactElement } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactElement } from "react";
 import { useUser } from "@clerk/nextjs";
 import {
   CheckCircle2,
@@ -84,7 +84,7 @@ const quickLinks = [
 const formLinks = [
   {
     label: "Campus Evaluation",
-    href: "https://docs.google.com/forms/d/e/1FAIpQLSfZ3TXVccBtIFxoOyLJCsTGsznKy25Wl3LaNoju7HKfxi3saQ/viewform?usp=publish-editor",
+    href: "https://docs.google.com/forms/d/e/1FAIpQLSfZ3TXVccBtIFxoOyLJCsTGsznKy25Wl3LaNoju7HKfxi3saQ/viewform",
     description: "Share feedback on the campus experience.",
     icon: <ClipboardCheck className="h-5 w-5" />,
   },
@@ -217,8 +217,10 @@ const faqItems = [
 export default function HelpPage() {
   const [isBotOpen, setIsBotOpen] = useState(true);
   const { user, isLoaded } = useUser();
+  const isBotOpenRef = useRef(true);
+  const reopenOnCloseRef = useRef(false);
 
-  const studentName = useMemo(() => {
+  const Name = useMemo(() => {
     if (!user) return undefined;
 
     return (
@@ -228,6 +230,31 @@ export default function HelpPage() {
       undefined
     );
   }, [user]);
+
+  useEffect(() => {
+    const handleClose = (event: Event) => {
+      const customEvent = event as CustomEvent<{ reopenOnClose?: boolean }>;
+      const shouldReopen = Boolean(customEvent.detail?.reopenOnClose);
+      reopenOnCloseRef.current = shouldReopen && isBotOpenRef.current;
+      if (isBotOpenRef.current) {
+        isBotOpenRef.current = false;
+        setIsBotOpen(false);
+      }
+    };
+    const handleOpen = () => {
+      if (reopenOnCloseRef.current && !isBotOpenRef.current) {
+        isBotOpenRef.current = true;
+        setIsBotOpen(true);
+      }
+      reopenOnCloseRef.current = false;
+    };
+    window.addEventListener("typebot:close", handleClose);
+    window.addEventListener("typebot:open", handleOpen);
+    return () => {
+      window.removeEventListener("typebot:close", handleClose);
+      window.removeEventListener("typebot:open", handleOpen);
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -386,14 +413,21 @@ export default function HelpPage() {
       {/* Typebot */}
       {isLoaded && (
         <Bubble
-          key={studentName ?? "guest"}
+          key={Name ?? "guest"}
           typebot="unispace-help"
           apiHost="https://typebot.io"
           theme={{ button: { backgroundColor: "#1D1D1D" } }}
           isOpen={isBotOpen}
-          onOpen={() => setIsBotOpen(true)}
-          onClose={() => setIsBotOpen(false)}
-          prefilledVariables={studentName ? { name: studentName } : undefined}
+          onOpen={() => {
+            isBotOpenRef.current = true;
+            setIsBotOpen(true);
+          }}
+          onClose={() => {
+            isBotOpenRef.current = false;
+            reopenOnCloseRef.current = false;
+            setIsBotOpen(false);
+          }}
+          prefilledVariables={Name ? { name: Name } : undefined}
         />
       )}
     </div>

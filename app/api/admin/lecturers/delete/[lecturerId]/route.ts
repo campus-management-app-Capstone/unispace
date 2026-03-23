@@ -45,6 +45,18 @@ async function deleteLecturerById(lecturerId: string) {
     );
   }
 
+  const { error: surveyAnnouncementError } = await supabase
+    .from("Announcement")
+    .delete()
+    .eq("UserID", lecturer.UserID)
+    .ilike("Title", "Survey for %");
+
+  if (surveyAnnouncementError) {
+    throw new Error(
+      `Failed to delete lecturer survey announcements: ${surveyAnnouncementError.message}`
+    );
+  }
+
   const { error: lecturerTeachError } = await supabase
     .from("LecturerTeach")
     .delete()

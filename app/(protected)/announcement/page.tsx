@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
 
 const ITEMS_PER_PAGE = 20;
 const SURVEY_FORM_URL =
-  'https://docs.google.com/forms/d/e/1FAIpQLScpgOOEl00Xs7wdqbel4fwKjEkTxlaa8RZ7ra_1lwa1Iv0p7g/viewform?usp=publish-editor';
+  'https://docs.google.com/forms/d/e/1FAIpQLScpgOOEl00Xs7wdqbel4fwKjEkTxlaa8RZ7ra_1lwa1Iv0p7g/viewform';
 
 interface AnnouncementRow {
   AnnouncementID: string;
@@ -37,12 +37,12 @@ function formatDate(value: string) {
   });
 }
 
-function buildSurveyUrl(classId: string, lecturerName: string) {
+function buildSurveyUrl(classId: string, lecturerCode: string) {
   const params = new URLSearchParams();
-  params.set('usp', 'publish-editor');
-  params.set('class', classId);
-  params.set('lecturer', lecturerName);
-  return `${SURVEY_FORM_URL.split('?')[0]}?${params.toString()}`;
+  params.set('usp', 'pp_url');
+  params.set('entry.999813908', classId);
+  params.set('entry.754796240', lecturerCode);
+  return `${SURVEY_FORM_URL}?${params.toString()}`;
 }
 
 function renderContentWithLinks(content: string) {
@@ -97,7 +97,7 @@ async function initiateSurveyAction(formData: FormData) {
   const supabaseServer = createServerSupabaseClient();
   const { data: lecturer } = await supabaseServer
     .from('Lecturer')
-    .select('LecturerID')
+    .select('LecturerID, LecturerCode')
     .eq('UserID', userId)
     .maybeSingle();
 
@@ -117,6 +117,8 @@ async function initiateSurveyAction(formData: FormData) {
     user?.username ||
     'Lecturer';
 
+  const lecturerCode = lecturer?.LecturerCode ?? lecturerName;
+
   const { data: existingSurvey } = await supabaseServer
     .from('Announcement')
     .select('AnnouncementID')
@@ -129,7 +131,7 @@ async function initiateSurveyAction(formData: FormData) {
     return;
   }
 
-  const surveyUrl = buildSurveyUrl(classId, lecturerName);
+  const surveyUrl = buildSurveyUrl(classId, lecturerCode);
   const title = `Survey for ${classId} (${lecturerName})`;
   const content = `Please complete the class survey for ${classId}.\nSurvey link: ${surveyUrl}`;
 

@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
 
         // checking
-        const {RegisteredCarID} = body;
+        const { RegisteredCarID } = body;
 
         const missingFields: string[] = [];
         if (!RegisteredCarID) missingFields.push('car id');
@@ -25,14 +25,46 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // deleting
         const supabase = await createBrowserSupabaseClient();
-        const {error} = await supabase
-        .from("RegisteredCar")
-        .delete()
-        .eq("RegisteredCarID", RegisteredCarID)
-        .eq("UserID", UserID);
-        
+
+        // double check parking session
+        const { data: checkSession, error: sessionError } = await supabase
+            .from('ParkingSession')
+            .select(
+                `
+                ParkingSessionID,
+                Start,
+                End
+            `
+            )
+            .eq('RegisteredCarID', RegisteredCarID)
+            .order('Start', { ascending: false })
+            .limit(1) // only get newest parking session
+            .is('End', null); // seek car that only still parking if have parking session, if have end, it will not get the session 
+
+        if (sessionError) {
+            return NextResponse.json(
+                { error: 'Failed to delete the vehicle: ' + sessionError.message },
+                { status: 500 }
+            );
+        }
+
+        if (checkSession && checkSession.length !== 0) {
+            return NextResponse.json(
+                { error: 'The vehicle is currently parked' },
+                { status: 500 }
+            );
+        }
+
+
+
+        // deleting
+        const { error } = await supabase
+            .from("RegisteredCar")
+            .delete()
+            .eq("RegisteredCarID", RegisteredCarID)
+            .eq("UserID", UserID);
+
         if (error) {
             return NextResponse.json(
                 { error: 'Failed to add vehicle: ' + error.message },
