@@ -1,5 +1,5 @@
 import React from "react";
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase";
 import { getStudentAttendanceOverview } from "@/lib/database";
@@ -12,11 +12,12 @@ import {
  * Student attendance overview page (server component).
  * Fetches from Supabase: semester-wise subject attendance and overall intake percentage.
  * Left: current (or selected) semester with subject names and classes attended/total.
- * Right: StudentID, Intake, overall intake attendance %, and Sign in Attendance button.
+ * Right: student name, intake, overall intake attendance %, and Sign in Attendance button.
  */
 export default async function StudentAttendanceOverviewPage() {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
+  const user = await currentUser();
 
   const supabase = createServerSupabaseClient();
   const { data: student, error: studentError } = await supabase
@@ -42,6 +43,11 @@ export default async function StudentAttendanceOverviewPage() {
   }
 
   const overview = await getStudentAttendanceOverview(student.StudentID);
+  const studentName =
+    `${user?.firstName ?? ""} ${user?.lastName ?? ""}`.trim() ||
+    user?.username ||
+    user?.primaryEmailAddress?.emailAddress ||
+    student.StudentID;
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6 md:flex-row">
@@ -62,7 +68,7 @@ export default async function StudentAttendanceOverviewPage() {
       )}
 
       <OverallCard
-        studentId={overview.studentId}
+        studentName={studentName}
         primaryIntake={overview.primaryIntake}
         overallIntakeAttendance={overview.overallIntakeAttendance}
       />

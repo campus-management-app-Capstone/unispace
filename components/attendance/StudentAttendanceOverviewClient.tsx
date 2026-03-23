@@ -79,21 +79,21 @@ export function SemesterCardWithSelector({
 }
 
 /**
- * Right card: StudentID, Intake, overall intake attendance %, Sign in Attendance button.
+ * Right card: student name, intake, overall intake attendance %, Sign in Attendance button.
  */
 export function OverallCard({
-  studentId,
+  studentName,
   primaryIntake,
   overallIntakeAttendance,
 }: {
-  studentId: string;
+  studentName: string;
   primaryIntake: string;
   overallIntakeAttendance: number;
 }) {
   return (
     <aside className="w-full max-w-sm rounded-2xl border border-gray-300 bg-white p-6 shadow-sm">
       <div className="mb-4 flex items-center justify-between text-sm text-gray-700">
-        <span>{studentId}</span>
+        <span>{studentName}</span>
         <span>{primaryIntake || "—"}</span>
       </div>
 
