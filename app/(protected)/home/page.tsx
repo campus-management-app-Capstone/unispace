@@ -227,7 +227,7 @@ export default async function HomePage() {
             </div>
             {todaysClasses.length > 0 && (
               <Link
-                href="/student/attendance/sign-in"
+                href={profile.role === "student"? "/student/attendance/sign-in" : "/lecturer/attendance"}
                 className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 px-4 py-2 rounded-xl text-xs font-bold shadow-sm active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
               >
                 <UserCheck className="size-4" />
