@@ -185,6 +185,42 @@ export default async function AdminAnalytics() {
         <ParkingSessionChart data={lineChartData} />
         <ParkingDistributionChart data={pieChartData} />
       </div>
+
+      {/* Google Form Response Buttons */}
+        <div className="flex justify-end gap-4 mt-6">
+          {/* Report Issue */}
+          <a
+            href="https://docs.google.com/forms/d/1qz6stYQkUvD8z1n0_JK4Yax7zugOlEA_1gPlsh744OI/edit#responses"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <button className="bg-blue-600 text-white px-4 py-2 rounded-xl shadow hover:bg-blue-700 transition">
+              Report Issue Responses
+            </button>
+          </a>
+
+          {/* Lecturer Evaluation */}
+          <a
+            href="https://docs.google.com/forms/d/1A2hCqeEti4otCUoTtFAypesVPHcfQtIzG7bBdaOoO9w/edit#responses"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <button className="bg-blue-600 text-white px-4 py-2 rounded-xl shadow hover:bg-blue-700 transition">
+              Lecturer Evaluation Responses
+            </button>
+          </a>
+
+          {/* Campus Satisfaction */}
+          <a
+            href="https://docs.google.com/forms/d/1A2hCqeEti4otCUoTtFAypesVPHcfQtIzG7bBdaOoO9w/edit#responses"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <button className="bg-blue-600 text-white px-4 py-2 rounded-xl shadow hover:bg-blue-700 transition">
+              Campus Satisfaction Responses
+            </button>
+          </a>
+        </div>
     </div>
   );
 }
