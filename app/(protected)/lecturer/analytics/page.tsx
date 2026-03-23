@@ -118,7 +118,7 @@ export default async function LecturerAnalyticsPage() {
   const evalAverages: Record<string, number> = {};
 
   const likertColumns = [
-    "Lecturer demonstrates good knowledge of the subject.",
+    "1. Lecturer demonstrates good knowledge of the subject.",
     "2. Lecturer is well prepared for each lecture or tutorial(lab) sessions.",
     "3. Lecturer is approachable when students need assistance.",
     "4. Lecturer explains the course material clearly.",
