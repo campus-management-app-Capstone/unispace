@@ -10,6 +10,7 @@ export async function GET() {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // double check
     const supabase = await createBrowserSupabaseClient();
     const { data, error } = await supabase
         .from('RegisteredCar')
