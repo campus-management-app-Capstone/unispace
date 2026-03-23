@@ -707,7 +707,8 @@ export async function getClassWithStudents(classId: string) {
           Intake,
           Student (
             StudentID,
-            StudentCode
+            StudentCode,
+            UserID
           )
         )
       )
@@ -956,7 +957,7 @@ export async function getAttendanceRecordsWithStudents(attendanceId: string) {
   const supabase = await createClerkSupabaseClient();
   const { data, error } = await supabase
     .from('AttendanceRecord')
-    .select('AttendanceRecordID, StudentID, Status, Student(StudentCode)')
+    .select('AttendanceRecordID, StudentID, Status, Student(StudentCode, UserID)')
     .eq('AttendanceID', attendanceId)
     .order('StudentID', { ascending: true });
 
@@ -965,7 +966,7 @@ export async function getAttendanceRecordsWithStudents(attendanceId: string) {
     AttendanceRecordID: string;
     StudentID: string;
     Status: string;
-    Student: { StudentCode: string | null } | null;
+    Student: { StudentCode: string | null; UserID: string | null } | null;
   }>;
 }
 

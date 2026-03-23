@@ -28,6 +28,7 @@ interface SessionData {
 
 interface StudentRow {
   studentId: string;
+  studentName: string;
   studentCode: string;
   status: "Present" | "Absent";
 }
@@ -234,7 +235,7 @@ export default function LecturerAttendanceCodePage() {
                     dataKey="value"
                     nameKey="name"
                   >
-                    {pieData.map((entry, index) => (
+                    {pieData.map((entry) => (
                       <Cell key={entry.name} fill={entry.color} />
                     ))}
                   </Pie>
@@ -272,7 +273,7 @@ export default function LecturerAttendanceCodePage() {
                 students.map((s, i) => (
                   <tr key={s.studentId} className="border-b border-gray-100">
                     <td className="py-2 pr-4 font-medium text-gray-900">
-                      {i + 1}. {s.studentCode}
+                      {i + 1}. {s.studentName}
                     </td>
                     <td className="py-2">
                       <span

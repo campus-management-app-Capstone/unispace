@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import {
   getLecturerByUserId,
   getAttendanceById,
@@ -10,7 +10,7 @@ import {
 /**
  * GET: Session details and student list with status for the attendance code page.
  * Returns classId, date, startTime, code, subjectName, durationHours, classGroup,
- * and students array with studentId, studentCode, status (Present | Absent).
+ * and students array with studentId, studentName, studentCode, status (Present | Absent).
  */
 export async function GET(
   _request: Request,
@@ -32,6 +32,7 @@ export async function GET(
   }
 
   try {
+    const clerk = await clerkClient();
     const lecturer = await getLecturerByUserId(userId);
     if (!lecturer) {
       return NextResponse.json(
@@ -48,7 +49,11 @@ export async function GET(
       Subject?: { Name?: string | null; Duration?: number | null } | null;
       ClassRegistration?: Array<{
         Enrollment?: {
-          Student?: { StudentID?: string | null; StudentCode?: string | null } | null;
+          Student?: {
+            StudentID?: string | null;
+            StudentCode?: string | null;
+            UserID?: string | null;
+          } | null;
         } | null;
       }>;
     } | null;
@@ -73,10 +78,14 @@ export async function GET(
       classTyped?.ClassRegistration?.map((reg) => reg.Enrollment?.Student).filter(Boolean) ?? [];
     const rosterMap = new Map<
       string,
-      { StudentID: string; StudentCode: string | null }
+      { StudentID: string; StudentCode: string | null; UserID: string | null }
     >();
     studentsFromClass.forEach((s) => {
-      const t = s as { StudentID: string; StudentCode: string | null };
+      const t = s as {
+        StudentID: string;
+        StudentCode: string | null;
+        UserID: string | null;
+      };
       if (t?.StudentID) rosterMap.set(t.StudentID, t);
     });
     records.forEach((r) => {
@@ -84,16 +93,49 @@ export async function GET(
         rosterMap.set(r.StudentID, {
           StudentID: r.StudentID,
           StudentCode: r.Student?.StudentCode ?? null,
+          UserID: null,
         });
     });
+
+    const uniqueUserIds = Array.from(
+      new Set(
+        Array.from(rosterMap.values())
+          .map((student) => student.UserID)
+          .filter((userId): userId is string => Boolean(userId))
+      )
+    );
+
+    const studentNameEntries = await Promise.all(
+      uniqueUserIds.map(async (studentUserId) => {
+        try {
+          const clerkUser = await clerk.users.getUser(studentUserId);
+          const studentName =
+            `${clerkUser.firstName ?? ""} ${clerkUser.lastName ?? ""}`.trim() ||
+            clerkUser.username ||
+            clerkUser.primaryEmailAddress?.emailAddress ||
+            null;
+
+          return [studentUserId, studentName] as const;
+        } catch (error) {
+          console.error("Failed to resolve student name for attendance roster:", error);
+          return [studentUserId, null] as const;
+        }
+      })
+    );
+
+    const studentNameByUserId = new Map(studentNameEntries);
 
     const students = Array.from(rosterMap.entries())
       .map(([id, s]) => ({
         studentId: id,
+        studentName:
+          (s.UserID ? studentNameByUserId.get(s.UserID) : null) ??
+          s.StudentCode ??
+          id,
         studentCode: s.StudentCode ?? codeByStudentId.get(id) ?? id,
         status: (statusByStudentId.get(id) ?? "Absent") as "Present" | "Absent",
       }))
-      .sort((a, b) => a.studentCode.localeCompare(b.studentCode));
+      .sort((a, b) => a.studentName.localeCompare(b.studentName));
 
     const subject = classTyped?.Subject;
     const durationHours = subject?.Duration ?? null;
