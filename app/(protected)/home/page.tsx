@@ -5,9 +5,12 @@ import { redirect } from 'next/navigation';
 import WelcomeToast from '@/components/WelcomeToast';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { createClerkSupabaseClient } from '@/lib/supabase';
+import { createClerkSupabaseClient, createServerSupabaseClient } from '@/lib/supabase';
 import { auth, currentUser } from '@clerk/nextjs/server';
-import { Calendar, Megaphone } from 'lucide-react';
+import { Megaphone, UserCheck, Zap, SquareParking } from 'lucide-react';
+
+import WalletWidget from '@/components/WalletWidget'; 
+import ParkingWidget from '@/components/ParkingWidget'; 
 
 export const dynamic = 'force-dynamic';
 
@@ -18,11 +21,12 @@ interface HomeProfile {
   secondaryLine: string;
 }
 
-interface AnnouncementSummaryRow {
-  AnnouncementID: string;
-  Title: string;
-  CreatedAt: string;
-  Target: string;
+interface TodayClassSlot {
+  id: string;
+  subjectName: string;
+  venue: string;
+  start: string;
+  end: string;
 }
 
 function getDisplayName(user: Awaited<ReturnType<typeof currentUser>>) {
@@ -34,19 +38,23 @@ function getDisplayName(user: Awaited<ReturnType<typeof currentUser>>) {
   );
 }
 
-function formatAnnouncementDate(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleString('en-SG', { month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+/** parse DB time ("13:00:00") into (time: "01:00", period: "PM") */
+function parseTimeForUI(timeStr: string | null) {
+  if (!timeStr) return { time: '--:--', period: '--' };
+  const [hours, minutes] = timeStr.split(':');
+  const h = parseInt(hours, 10);
+  if (isNaN(h)) return { time: '--:--', period: '--' };
+
+  const period = h >= 12 ? 'PM' : 'AM';
+  const displayH = h % 12 || 12;
+  const paddedH = displayH < 10 ? `0${displayH}` : `${displayH}`;
+  return { time: `${paddedH}:${minutes || '00'}`, period };
 }
 
-/** Fetch student/lecturer profile details shown on `/home`. */
-async function getHomeProfile(): Promise<HomeProfile> {
-  const { userId, sessionClaims } = await auth();
-  if (!userId) redirect('/sign-in');
-
-  const user = await currentUser();
-  const role = (sessionClaims?.metadata?.role as string | undefined) ?? (user?.publicMetadata?.role as string | undefined);
+/** Fetch student/lecturer profile details */
+async function getHomeProfile(userId: string, user: Awaited<ReturnType<typeof currentUser>>): Promise<HomeProfile> {
+  const sessionClaims = user?.publicMetadata;
+  const role = (sessionClaims?.role as string | undefined) ?? (user?.publicMetadata?.role as string | undefined);
   if (!role || (role !== 'student' && role !== 'lecturer')) redirect('/home');
 
   const supabase = await createClerkSupabaseClient();
@@ -97,88 +105,72 @@ async function getHomeProfile(): Promise<HomeProfile> {
   };
 }
 
-/** Fetch the most recent announcements visible to the user (student/lecturer). */
-async function getRecentAnnouncements(limit: number): Promise<AnnouncementSummaryRow[]> {
-  const { userId } = await auth();
-  if (!userId) redirect('/sign-in');
-
-  const user = await currentUser();
-  const role = (user?.publicMetadata?.role as string | undefined) ?? undefined;
-  if (!role || !['student', 'lecturer', 'admin'].includes(role)) return [];
-
-  const supabase = await createClerkSupabaseClient();
-
+/** Fetch ONLY today's classes based on Role */
+async function getTodaysTimetable(userId: string, role: string): Promise<TodayClassSlot[]> {
+  const supabase = createServerSupabaseClient();
   let classIds: string[] = [];
 
+  // Get Class IDs based on role
   if (role === 'student') {
-    const { data: student } = await supabase
-      .from('Student')
-      .select('StudentID')
-      .eq('UserID', userId)
-      .maybeSingle();
-
-    if (student?.StudentID) {
-      const { data: enrollments } = await supabase
-        .from('Enrollment')
-        .select('EnrollmentID')
-        .eq('StudentID', student.StudentID);
-
-      const enrollmentIds = (enrollments ?? []).map((e) => e.EnrollmentID).filter(Boolean);
+    const { data: student } = await supabase.from('Student').select('StudentID').eq('UserID', userId).maybeSingle();
+    if (student) {
+      const { data: enrollments } = await supabase.from('Enrollment').select('EnrollmentID').eq('StudentID', student.StudentID);
+      const enrollmentIds = (enrollments ?? []).map((e) => e.EnrollmentID);
       if (enrollmentIds.length > 0) {
-        const { data: regs } = await supabase
-          .from('ClassRegistration')
-          .select('ClassID')
-          .in('EnrollmentID', enrollmentIds);
-
+        const { data: regs } = await supabase.from('ClassRegistration').select('ClassID').in('EnrollmentID', enrollmentIds);
         classIds = Array.from(new Set((regs ?? []).map((r) => r.ClassID).filter(Boolean))) as string[];
       }
     }
-  }
-
-  if (role === 'lecturer') {
-    const { data: lecturer } = await supabase
-      .from('Lecturer')
-      .select('LecturerID')
-      .eq('UserID', userId)
-      .maybeSingle();
-
-    if (lecturer?.LecturerID) {
-      const { data: classes } = await supabase
-        .from('Class')
-        .select('ClassID')
-        .eq('LecturerID', lecturer.LecturerID);
-
+  } else if (role === 'lecturer') {
+    const { data: lecturer } = await supabase.from('Lecturer').select('LecturerID').eq('UserID', userId).maybeSingle();
+    if (lecturer) {
+      const { data: classes } = await supabase.from('Class').select('ClassID').eq('LecturerID', lecturer.LecturerID);
       classIds = Array.from(new Set((classes ?? []).map((c) => c.ClassID).filter(Boolean))) as string[];
     }
   }
 
-  const allowedTargets = role === 'admin' ? null : ['All', ...classIds];
+  if (classIds.length === 0) return [];
 
-  const announcementQuery = supabase
-    .from('Announcement')
-    .select('AnnouncementID, Title, CreatedAt, Target')
-    .order('CreatedAt', { ascending: false })
-    .limit(limit);
+  // "Mon", "Tue")
+  const todayStr = new Date().toLocaleDateString('en-US', { weekday: 'short', timeZone: 'Asia/Kuala_Lumpur' });
 
-  if (allowedTargets && allowedTargets.length > 0) {
-    announcementQuery.in('Target', allowedTargets);
-  } else if (allowedTargets) {
-    announcementQuery.in('Target', ['All']);
-  }
+  // Fetch slots
+  const { data: slotRows } = await supabase
+    .from('TimetableSlot')
+    .select(`
+      TimetableSlotID, Day, Start, End,
+      Facility ( Name ),
+      Class ( Subject ( Name ) )
+    `)
+    .in('ClassID', classIds)
+    .ilike('Day', `${todayStr}%`) // Matches "Mon" or "Monday"
+    .order('Start', { ascending: true });
 
-  const { data } = await announcementQuery;
-  return (data ?? []) as AnnouncementSummaryRow[];
+  if (!slotRows) return [];
+
+  // Map to UI Model
+  return slotRows.map((row: any) => ({
+    id: row.TimetableSlotID,
+    subjectName: row.Class?.Subject?.Name ?? 'Unknown Subject',
+    venue: row.Facility?.Name ?? 'TBA',
+    start: row.Start ?? '',
+    end: row.End ?? '',
+  }));
 }
 
-/** Home page dashboard for both student and lecturer (profile + announcements). */
 export default async function HomePage() {
-  const profile = await getHomeProfile();
-  const announcements = await getRecentAnnouncements(6);
+  const { userId } = await auth();
+  if (!userId) redirect('/sign-in');
+
+  const user = await currentUser();
+  const profile = await getHomeProfile(userId, user!);
+  const todaysClasses = await getTodaysTimetable(userId, profile.role);
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6 p-4">
       <WelcomeToast />
 
+      {/* --- TOP SECTION: PROFILE --- */}
       <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
@@ -215,7 +207,7 @@ export default async function HomePage() {
             </div>
           </div>
 
-          <Button asChild variant="outline" className="self-start sm:self-auto">
+          <Button asChild variant="outline" className="self-start sm:self-auto cursor-pointer">
             <Link href="/announcement" className="gap-2">
               <Megaphone className="size-4" />
               View announcements
@@ -224,37 +216,61 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-1">
-            <h2 className="text-lg font-semibold text-slate-900">Announcement</h2>
-            <p className="text-sm text-slate-600">Latest updates relevant to you.</p>
+      {/* --- BOTTOM SECTION: BENTO GRID LAYOUT --- */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        {/* Today's Timetable Widget */}
+        <div className="md:col-span-2 bg-white border border-slate-200 shadow-sm rounded-xl p-6">
+          <div className="flex justify-between items-start mb-6">
+            <div>
+              <h3 className="font-bold text-lg text-slate-900">Today's Timetable</h3>
+            </div>
+            {todaysClasses.length > 0 && (
+              <Link
+                href={profile.role === "student"? "/student/attendance/sign-in" : "/lecturer/attendance"}
+                className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 px-4 py-2 rounded-xl text-xs font-bold shadow-sm active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+              >
+                <UserCheck className="size-4" />
+                Sign Attendance
+              </Link>
+            )}
+          </div>
+
+          <div className="space-y-3">
+            {todaysClasses.length === 0 ? (
+              <div className="py-8 text-center text-sm text-slate-500 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                No classes scheduled for today. Take a break!
+              </div>
+            ) : (
+              todaysClasses.map((cls) => {
+                const { time, period } = parseTimeForUI(cls.start);
+
+                return (
+                  <div key={cls.id} className="bg-slate-50 border border-slate-100 rounded-xl p-4 flex items-center justify-between hover:border-slate-200 transition-colors shadow-sm">
+                    <div className="flex gap-4 items-center">
+                      <div className="w-12 h-12 rounded-lg bg-slate-200 flex flex-col items-center justify-center text-[10px] font-bold text-slate-500 shrink-0">
+                        <span>{time}</span>
+                        <span>{period}</span>
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-sm text-slate-900 line-clamp-1">{cls.subjectName}</h4>
+                        <p className="text-xs text-slate-500">{cls.venue}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
 
-        {announcements.length === 0 ? (
-          <div className="mt-4 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-600">
-            No announcements available.
-          </div>
-        ) : (
-          <div className="mt-4 divide-y divide-slate-100 rounded-lg border border-slate-200">
-            {announcements.map((announcement) => (
-              <div key={announcement.AnnouncementID} className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-slate-900">{announcement.Title}</p>
-                  <p className="text-xs text-slate-500">
-                    {announcement.Target === 'All' ? 'All' : `Class ${announcement.Target}`}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-slate-500 sm:shrink-0">
-                  <Calendar className="size-3.5" />
-                  {formatAnnouncementDate(announcement.CreatedAt)}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+        {/* Dynamic Campus Wallet Card */}
+        <WalletWidget />
+
+        {/* Parking Slot Widget */}
+        <ParkingWidget />
+
+      </div>
     </div>
   );
 }

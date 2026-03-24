@@ -25,23 +25,23 @@ interface SurveyCardItem {
 }
 
 const surveyCardItems: SurveyCardItem[] = [
-  {
-    title: "Lecture Evaluation",
-    description:
-      "Open the lecturer feedback form to review or share the teaching evaluation survey.",
-    href: "https://docs.google.com/forms/d/1A2hCqeEti4otCUoTtFAypesVPHcfQtIzG7bBdaOoO9w/edit",
-    ctaLabel: "Open lecture evaluation form",
-    icon: GraduationCap,
-    accentClassName:
-      "border-violet-200 bg-[radial-gradient(circle_at_top_left,_rgba(139,92,246,0.18),_transparent_58%),linear-gradient(180deg,_rgba(255,255,255,0.96),_rgba(245,243,255,0.96))]",
-    iconClassName: "bg-violet-100 text-violet-700",
-    isStudentOnly: true,
-  },
+  // {
+  //   title: "Lecture Evaluation",
+  //   description:
+  //     "Open the lecturer feedback form to review or share the teaching evaluation survey.",
+  //   href: "https://docs.google.com/forms/d/1A2hCqeEti4otCUoTtFAypesVPHcfQtIzG7bBdaOoO9w/edit",
+  //   ctaLabel: "Open lecture evaluation form",
+  //   icon: GraduationCap,
+  //   accentClassName:
+  //     "border-violet-200 bg-[radial-gradient(circle_at_top_left,_rgba(139,92,246,0.18),_transparent_58%),linear-gradient(180deg,_rgba(255,255,255,0.96),_rgba(245,243,255,0.96))]",
+  //   iconClassName: "bg-violet-100 text-violet-700",
+  //   isStudentOnly: true,
+  // },
   {
     title: "Campus Satisfaction",
     description:
       "Open the campus experience form to collect feedback on facilities, services, and student life.",
-    href: "https://docs.google.com/forms/d/1q-gUsbyXC_jY4yihDJE9Zya28wC1gSpo8xNk1206pZ8/edit",
+    href: "https://docs.google.com/forms/d/e/1FAIpQLSfZ3TXVccBtIFxoOyLJCsTGsznKy25Wl3LaNoju7HKfxi3saQ/viewform?usp=header",
     ctaLabel: "Open campus satisfaction form",
     icon: Building2,
     accentClassName:

@@ -94,10 +94,15 @@ export async function GET() {
         new Set(enrollments?.map((e) => e.Intake) || [])
     ).sort().reverse();
 
+    const levels = Array.from(
+      new Set((courses ?? []).map((course) => course.Level).filter(Boolean))
+    ).sort();
+
     return NextResponse.json({
-        students: result ?? [],
-        courses: courses ?? [],
-        intakes: intakes ?? [],
+      students: result ?? [],
+      courses: courses ?? [],
+      intakes: intakes ?? [],
+      levels,
     });
 
   } catch (err) {
