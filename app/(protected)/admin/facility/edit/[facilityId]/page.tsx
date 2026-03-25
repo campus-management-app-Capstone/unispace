@@ -123,14 +123,14 @@ export default function EditFacilityPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Failed to update facility");
+        throw new Error(data.error || "Failed to update facility. Please ensure the details are correct.");
       }
 
       toast.success("Facility updated successfully");
       router.push("/admin/facility");
     } catch (err) {
       console.error(err);
-      toast.error(err instanceof Error ? err.message : "Failed to update facility");
+      toast.error(err instanceof Error ? err.message : "Failed to update facility. Please ensure the details are correct.");
     } finally {
       setSaving(false);
     }

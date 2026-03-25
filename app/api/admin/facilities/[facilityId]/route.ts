@@ -92,6 +92,6 @@ export async function PUT(
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (err) {
     console.error("Failed to update facility:", err);
-    return NextResponse.json({ error: "Failed to update facility" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to update facility. Please ensure the details are correct." }, { status: 500 });
   }
 }
