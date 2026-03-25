@@ -223,7 +223,7 @@ export default async function HomePage() {
         <div className="md:col-span-2 bg-white border border-slate-200 shadow-sm rounded-xl p-6">
           <div className="flex justify-between items-start mb-6">
             <div>
-              <h3 className="font-bold text-lg text-slate-900">Today's Timetable</h3>
+              <h3 className="font-bold text-lg text-slate-900">Today&apos;s Timetable</h3>
             </div>
             {todaysClasses.length > 0 && (
               <Link
