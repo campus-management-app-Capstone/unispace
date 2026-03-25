@@ -49,7 +49,7 @@ const surveyCardItems: SurveyCardItem[] = [
     title: "Report Issue",
     description:
       "Open the report issue form to report any issues or feedback on the campus.",
-    href: "https://docs.google.com/forms/d/e/1FAIpQLSciYhXQ1QI8jd_hVRRGXJafyyClIh_LY20j6rCnSt6h7_S_EQ/viewform?embedded=true%22",
+    href: "https://docs.google.com/forms/d/1qz6stYQkUvD8z1n0_JK4Yax7zugOlEA_1gPlsh744OI/edit",
     ctaLabel: "Open report issue form",
     icon: AlertCircle,
     accentClassName:
