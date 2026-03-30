@@ -28,7 +28,7 @@ const AdminHomePage = () => {
     href: string;
     Icon: React.ComponentType<{ className?: string }>;
   }[] = [
-    { key: 'course', label: 'Course List', href: '/admin/course', Icon: BookOpen },
+    { key: 'course', label: 'Course List', href: '/admin/course/courselist', Icon: BookOpen },
     { key: 'department', label: 'Department', href: '/admin/course/department', Icon: Building2 },
     { key: 'subject', label: 'Subject', href: '/admin/course/subject', Icon: ClipboardList },
     { key: 'class', label: 'Class', href: '/admin/course/class', Icon: Table2 },
@@ -37,7 +37,7 @@ const AdminHomePage = () => {
     { key: 'timetable', label: 'Timetable', href: '/admin/timetable', Icon: LayoutDashboard },
     { key: 'facility', label: 'Facility', href: '/admin/facility', Icon: School },
     { key: 'survey', label: 'Survey', href: '/admin/survey', Icon: FileText },
-    { key: 'announcement', label: 'Announcement', href: '/announcement', Icon: Megaphone },
+    { key: 'announcement', label: 'Announcement', href: '/admin/announcement', Icon: Megaphone },
     { key: 'admin', label: 'Admin', href: '/admin/adminmanagement', Icon: Activity },
     { key: 'analytics', label: 'Analytics', href: '/admin/analytics', Icon: BarChart3 },
   ];
