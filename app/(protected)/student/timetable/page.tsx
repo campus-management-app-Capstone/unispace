@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { auth, currentUser } from '@clerk/nextjs/server';
+import { auth, currentUser, clerkClient } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { createServerSupabaseClient } from '@/lib/supabase';
 
@@ -14,6 +14,7 @@ interface StudentTimetableSlot {
   time: string;
   venue: string | null;
   lecturer: string | null;
+  lecturerUserId: string | null;
   day: string | null;
   start: string | null;
   end: string | null;
@@ -48,7 +49,7 @@ function mapToStudentSlots(rows: unknown[]): StudentTimetableSlot[] {
       Class?: {
         ClassID?: string | null;
         Subject?: { Name?: string | null } | null;
-        Lecturer?: { LecturerCode?: string | null } | null;
+        Lecturer?: { LecturerCode?: string | null; UserID?: string | null } | null;
       } | null;
     };
 
@@ -64,6 +65,7 @@ function mapToStudentSlots(rows: unknown[]): StudentTimetableSlot[] {
       time: timeStr,
       venue: typedRow.Facility?.Name ?? null,
       lecturer: cls?.Lecturer?.LecturerCode ?? null,
+      lecturerUserId: cls?.Lecturer?.UserID ?? null,
       day: typedRow.Day,
       start: typedRow.Start,
       end: typedRow.End,
@@ -203,7 +205,9 @@ export default async function StudentTimetablePage({
           Name
         ),
         Lecturer (
-          LecturerCode
+          LecturerID,
+          LecturerCode,
+          UserID
         )
       )
     `
@@ -214,6 +218,36 @@ export default async function StudentTimetablePage({
 
     const allSlots = mapToStudentSlots(slotRows ?? []);
 
+    const lecturerUserIds = Array.from(
+      new Set(
+        allSlots.map((slot) => slot.lecturerUserId).filter(Boolean)
+      )
+    ) as string[];
+
+    const lecturerNameByUserId = new Map<string, string>();
+
+    if (lecturerUserIds.length > 0) {
+      const clerk = await clerkClient();
+      const lecturerUserIdsSet = new Set(lecturerUserIds);
+      const users = await clerk.users.getUserList({ limit: 500 });
+      users.data.forEach((user) => {
+        if (!lecturerUserIdsSet.has(user.id)) return;
+        const firstName = user.firstName ?? '';
+        const lastName = user.lastName ?? '';
+        const name = user.fullName || [firstName, lastName].filter(Boolean).join(' ') || user.username || '';
+        if (name) lecturerNameByUserId.set(user.id, name);
+      });
+    }
+
+    // Replace lecturer code with lecturer display name for rendering.
+    const slotsToRender = allSlots.map((slot) => {
+      const nameFromClerk = slot.lecturerUserId ? lecturerNameByUserId.get(slot.lecturerUserId) : undefined;
+      return {
+        ...slot,
+        lecturer: nameFromClerk || slot.lecturer || '—',
+      };
+    });
+
     // Group slots by normalized day
     const slotsByDay: Record<string, StudentTimetableSlot[]> = DAY_ORDER.reduce(
       (acc, key) => {
@@ -223,7 +257,7 @@ export default async function StudentTimetablePage({
       {} as Record<string, StudentTimetableSlot[]>
     );
 
-    allSlots.forEach((slot) => {
+    slotsToRender.forEach((slot) => {
       const normalized = normalizeDay(slot.day);
       if (!normalized) return;
       if (slotsByDay[normalized]) {
@@ -269,13 +303,12 @@ export default async function StudentTimetablePage({
                 <Link
                   key={dayKey}
                   href={`/student/timetable?day=${dayKey}`}
-                  className={`flex w-full items-center justify-center rounded-lg border px-2 py-2.5 text-sm font-medium transition-colors sm:px-3 ${
-                    isActive
+                  className={`flex w-full items-center justify-center rounded-lg border px-2 py-2.5 text-sm font-medium transition-colors sm:px-3 ${isActive
                       ? 'border-gray-800 bg-gray-800 text-white'
                       : hasSlots
                         ? 'border-gray-200 bg-white text-gray-800 hover:bg-gray-50'
                         : 'border-gray-100 bg-gray-50 text-gray-400'
-                  }`}
+                    }`}
                 >
                   {DAY_HEADERS[index]}
                 </Link>

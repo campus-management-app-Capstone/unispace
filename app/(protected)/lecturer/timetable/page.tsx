@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { auth, currentUser } from '@clerk/nextjs/server';
+import { auth, currentUser, clerkClient } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { createServerSupabaseClient } from '@/lib/supabase';
 
@@ -30,6 +30,7 @@ interface LecturerTimetableSlot {
   time: string;
   venue: string | null;
   lecturer: string | null;
+  lecturerUserId: string | null;
   day: string | null;
   start: string | null;
   end: string | null;
@@ -60,7 +61,7 @@ function mapToLecturerSlots(rows: unknown[]): LecturerTimetableSlot[] {
       Class?: {
         ClassID?: string | null;
         Subject?: { Name?: string | null } | null;
-        Lecturer?: { LecturerCode?: string | null } | null;
+        Lecturer?: { LecturerCode?: string | null; UserID?: string | null } | null;
       } | null;
     };
     const cls = typedRow.Class ?? null;
@@ -74,6 +75,7 @@ function mapToLecturerSlots(rows: unknown[]): LecturerTimetableSlot[] {
       time: timeStr,
       venue: typedRow.Facility?.Name ?? null,
       lecturer: cls?.Lecturer?.LecturerCode ?? null,
+      lecturerUserId: cls?.Lecturer?.UserID ?? null,
       day: typedRow.Day,
       start: typedRow.Start,
       end: typedRow.End,
@@ -242,7 +244,7 @@ export default async function LecturerTimetablePage({
       Class (
         ClassID,
         Subject ( Name ),
-        Lecturer ( LecturerCode ),
+        Lecturer ( LecturerCode, UserID ),
         ClassRegistration (
           Enrollment (
             Intake,
@@ -286,6 +288,34 @@ export default async function LecturerTimetablePage({
 
     const allSlots = mapToLecturerSlots(rowsToShow);
 
+    // Resolve lecturer display names using Clerk (replacing lecturer code for rendering).
+    const lecturerUserIds = Array.from(
+      new Set(allSlots.map((slot) => slot.lecturerUserId).filter(Boolean))
+    ) as string[];
+    const lecturerNameByUserId = new Map<string, string>();
+    if (lecturerUserIds.length > 0) {
+      const clerk = await clerkClient();
+      const lecturerUserIdsSet = new Set(lecturerUserIds);
+      const users = await clerk.users.getUserList({ limit: 500 });
+      users.data.forEach((user) => {
+        if (!lecturerUserIdsSet.has(user.id)) return;
+        const firstName = user.firstName ?? '';
+        const lastName = user.lastName ?? '';
+        const name = user.fullName || [firstName, lastName].filter(Boolean).join(' ') || user.username || '';
+        if (name) lecturerNameByUserId.set(user.id, name);
+      });
+    }
+
+    const slotsToRender = allSlots.map((slot) => {
+      const nameFromClerk = slot.lecturerUserId
+        ? lecturerNameByUserId.get(slot.lecturerUserId)
+        : undefined;
+      return {
+        ...slot,
+        lecturer: nameFromClerk || slot.lecturer || '—',
+      };
+    });
+
     const slotsByDay: Record<string, LecturerTimetableSlot[]> = DAY_ORDER.reduce(
       (acc, key) => {
         acc[key] = [];
@@ -293,7 +323,7 @@ export default async function LecturerTimetablePage({
       },
       {} as Record<string, LecturerTimetableSlot[]>
     );
-    allSlots.forEach((slot) => {
+    slotsToRender.forEach((slot) => {
       const norm = normalizeDay(slot.day);
       if (norm && slotsByDay[norm]) slotsByDay[norm].push(slot);
     });
