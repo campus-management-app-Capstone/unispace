@@ -42,7 +42,7 @@ const renderFormIcon = (icon: ReactElement): ReactElement => (
 
 /* Quick Links */
 
-const quickLinks = [
+let quickLinks = [
   {
     label: "Campus Map",
     href: "/map",
@@ -79,7 +79,7 @@ const quickLinks = [
     description: "View and mark attendance for your classes.",
     iconKey: "clipboard",
   },
-] as const;
+];
 
 const formLinks = [
   {
@@ -215,6 +215,7 @@ const faqItems = [
 /* Component */
 
 export default function HelpPage() {
+
   const [isBotOpen, setIsBotOpen] = useState(true);
   const { user, isLoaded } = useUser();
   const isBotOpenRef = useRef(true);
@@ -230,6 +231,46 @@ export default function HelpPage() {
       undefined
     );
   }, [user]);
+  const role = (user?.publicMetadata?.role as string) ?? "student";
+
+  let quickLinks = [
+    {
+      label: "Campus Map",
+      href: "/map",
+      description: "Find paths between locations and switch floors.",
+      iconKey: "map",
+    },
+    {
+      label: "Facilities",
+      href: "/facility",
+      description: "Book study rooms, sports facilities, and more.",
+      iconKey: "building",
+    },
+    {
+      label: "My Timetable",
+      href: role === "student"? "/student/timetable" : "/lecturer/timetable",
+      description: "Check your classes by day.",
+      iconKey: "calendar",
+    },
+    {
+      label: "Wallet",
+      href: "/wallet",
+      description: "Top up and review transactions.",
+      iconKey: "wallet",
+    },
+    {
+      label: "Parking",
+      href: "/parking",
+      description: "Manage vehicles and sessions.",
+      iconKey: "car",
+    },
+    {
+      label: "Attendance",
+      href: role === "student"? "/student/attendance" : "/lecturer/attendance",
+      description: "View and mark attendance for your classes.",
+      iconKey: "clipboard",
+    },
+  ];
 
   useEffect(() => {
     const handleClose = (event: Event) => {
